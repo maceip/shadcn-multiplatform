@@ -21,7 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import com.composables.icons.lucide.ArrowDown
+import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.ArrowRight
+import com.composables.icons.lucide.ArrowUp
+import com.composables.icons.lucide.Lucide
 import com.github.jershell.shadcn.components.button.Button
+import com.github.jershell.shadcn.components.button.ButtonIcon
 import com.github.jershell.shadcn.components.button.ButtonSize
 import com.github.jershell.shadcn.components.button.ButtonText
 import com.github.jershell.shadcn.components.button.ButtonVariant
@@ -184,7 +190,17 @@ fun TerminalExtraKeys(
                 size = ButtonSize.Sm,
                 variant = ButtonVariant.Outline,
                 modifier = Modifier.semantics { contentDescription = terminalKey.name },
-            ) { ButtonText(terminalKey.label) }
+            ) {
+                val arrow = when (terminalKey) {
+                    TerminalKey.Left -> Lucide.ArrowLeft
+                    TerminalKey.Down -> Lucide.ArrowDown
+                    TerminalKey.Up -> Lucide.ArrowUp
+                    TerminalKey.Right -> Lucide.ArrowRight
+                    else -> null
+                }
+                if (arrow != null) ButtonIcon(imageVector = arrow, contentDescription = null)
+                else ButtonText(terminalKey.label)
+            }
         }
     }
 }

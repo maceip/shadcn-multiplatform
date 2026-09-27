@@ -111,6 +111,7 @@ jobs:
           name: wasm-gallery-screenshots
           path: build/reports/wasm-gallery/
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: wasm-demo
           path: demoApp/webApp/build/dist/wasmJs/developmentExecutable/

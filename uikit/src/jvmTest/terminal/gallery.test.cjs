@@ -24,7 +24,9 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     });
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const browser = await chromium.launch({ headless: true });
+  // Full Chromium uses the normal compositor. The separate headless-shell
+  // overpaints Canvas/iframe interop even when both elements have correct bounds.
+  const browser = await chromium.launch({ headless: true, channel: 'chromium' });
   let page;
   try {
     page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, reducedMotion: 'reduce' });
@@ -73,10 +75,14 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
             await button('Overview').waitFor();
             await page.keyboard.press('Escape');
             await button('Overview').waitFor({ state: 'hidden' });
+            // Modal canvases have their own on-demand accessibility surface.
+            // Resume keyboard navigation in the parent after dismissal.
+            await page.keyboard.press('Tab');
             await activate('Open navigation');
             await button('Overview').waitFor();
             await activate('Metal button');
             await button('Overview').waitFor({ state: 'hidden' });
+            await page.keyboard.press('Tab');
           }
         }
         await page.screenshot({ path: path.join(screenshots, `${name}-${width}.png`) });
@@ -117,6 +123,23 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     await terminalFrame.waitForFunction(() => terminalCommands.filter(command => command.type === 'write').map(command => command.data).join('').includes('echo-test'));
     await activate('ANSI sample');
     await page.waitForFunction(() => terminalCommands.some(event => event.type === 'bell'));
+    const controlPixels = (await button('Clear').screenshot()).toString('base64');
+    const visibleInk = await page.evaluate(async base64 => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width; canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, image.width, image.height).data;
+      let count = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] < 170 && pixels[i + 1] < 170 && pixels[i + 2] < 170 && pixels[i + 3] > 0) count++;
+      }
+      return count;
+    }, controlPixels);
+    assert.ok(visibleInk > 10, 'the HTML terminal does not visually cover the Compose controls below it');
     await capture('terminal');
     const dimensions = await page.evaluate(() => terminalCommands.filter(event => event.type === 'resize').map(event => event.columns));
     assert.ok(new Set(dimensions).size > 1, 'Compose viewport resize reaches the iframe engine');

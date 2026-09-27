@@ -47,6 +47,11 @@ class PromptLayoutInteractionTest {
                 }
             }
         } }
+        // Assistant Markdown parses asynchronously outside Compose's idle tracking.
+        // Wait for the rendered content before measuring either message's final bounds.
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodesWithText("Short assistant").fetchSemanticsNodes().size == 1
+        }
         val user = onNodeWithTag("user").fetchSemanticsNode().boundsInRoot
         val assistant = onNodeWithTag("assistant").fetchSemanticsNode().boundsInRoot
         val userText = onNodeWithText("Short user").fetchSemanticsNode().boundsInRoot
