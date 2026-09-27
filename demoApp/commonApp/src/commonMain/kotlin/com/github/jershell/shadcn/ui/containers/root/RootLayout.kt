@@ -1,27 +1,31 @@
 package com.github.jershell.shadcn.ui.containers.root
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.composeunstyled.theme.Theme
 import com.github.jershell.features.root.ToolBar
+import com.github.jershell.shadcn.components.button.Button
+import com.github.jershell.shadcn.components.button.ButtonSize
+import com.github.jershell.shadcn.components.button.ButtonText
+import com.github.jershell.shadcn.components.button.ButtonVariant
+import com.github.jershell.shadcn.components.drawer.Drawer
+import com.github.jershell.shadcn.components.drawer.DrawerSide
+import com.github.jershell.shadcn.components.drawer.DrawerTitle
 import com.github.jershell.shadcn.components.sidebar.Sidebar
 import com.github.jershell.shadcn.components.sidebar.SidebarCollapsible
 import com.github.jershell.shadcn.components.sidebar.SidebarProvider
 import com.github.jershell.shadcn.components.typography.H4
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
+import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.ui.navigation.Component
 import com.github.jershell.shadcn.ui.navigation.ComponentsRegistry
 import com.github.jershell.shadcn.ui.navigation.Icons
@@ -37,89 +41,136 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RootLayout(navStack: NavBackStack<NavKey>, content: @Composable () -> Unit) {
+    LaunchedEffect(navStack.toList()) {
+        navStack.forEachIndexed { idx, item -> Log.debug("Navstack: [$idx] $item") }
+    }
+    ResponsiveDemoLayout(
+        navigation = { modifier, collapsible, onNavigate -> DemoNavigation(navStack, modifier, collapsible, onNavigate) },
+        toolbar = { label, expanded -> ToolBar(label, expanded) },
+        content = content,
+    )
+}
+
+/** The phone navigation overlays content; desktop collapse state is retained across resize. */
+@Composable
+internal fun ResponsiveDemoLayout(
+    modifier: Modifier = Modifier,
+    navigation: @Composable (modifier: Modifier, collapsible: SidebarCollapsible, onNavigate: () -> Unit) -> Unit,
+    toolbar: @Composable (navigationLabel: String, expanded: Boolean) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    var desktopExpanded by rememberSaveable { mutableStateOf(true) }
+    var mobileExpanded by rememberSaveable { mutableStateOf(false) }
+    BoxWithConstraints(modifier.fillMaxSize().background(Theme[ColorProps][ColorTokens.sidebar]).safeDrawingPadding()) {
+        val compact = maxWidth < BaseTokens.token768
+        LaunchedEffect(compact) { mobileExpanded = false }
+        val expanded = if (compact) mobileExpanded else desktopExpanded
+        SidebarProvider(expanded = expanded, onExpandedChange = {
+            if (compact) mobileExpanded = it else desktopExpanded = it
+        }) {
+            Row(Modifier.fillMaxSize()) {
+                if (!compact) navigation(Modifier.fillMaxHeight(), SidebarCollapsible.Icon) {}
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    toolbar(if (expanded) "Close navigation" else "Open navigation", expanded)
+                    Box(Modifier.weight(1f).fillMaxWidth().padding(BaseTokens.token16)) { content() }
+                }
+            }
+            if (compact) Drawer(
+                open = mobileExpanded,
+                onOpenChange = { mobileExpanded = it },
+                side = DrawerSide.Left,
+                draggable = false,
+                showDragHandle = false,
+                panelWidth = minOf(BaseTokens.token320, maxWidth - BaseTokens.token48).coerceAtLeast(BaseTokens.token0),
+                modifier = Modifier.safeDrawingPadding(),
+            ) {
+                Row(Modifier.fillMaxWidth().padding(BaseTokens.token8),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    DrawerTitle("Browse components", Modifier.weight(1f))
+                    Button({ mobileExpanded = false }, Modifier.semantics { contentDescription = "Close navigation" },
+                        variant = ButtonVariant.Ghost, size = ButtonSize.Icon) { ButtonText("×") }
+                }
+                // The modal panel always shows the full labels regardless of desktop collapse state.
+                SidebarProvider(expanded = true) {
+                    navigation(Modifier.fillMaxWidth().weight(1f), SidebarCollapsible.None) { mobileExpanded = false }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DemoNavigation(navStack: NavBackStack<NavKey>, modifier: Modifier,
+    collapsible: SidebarCollapsible, onNavigate: () -> Unit) {
     val s_root_layout_components = stringResource(Res.string.root_layout_components)
     val s_root_layout_icons = stringResource(Res.string.root_layout_icons)
     val s_root_layout_overview = stringResource(Res.string.root_layout_overview)
     val registryEntries = ComponentsRegistry.all()
     val currentScreen = navStack.lastOrNull()
 
-    LaunchedEffect(navStack.toList()) {
-        navStack.forEachIndexed { idx, item ->
-            Log.debug("Navstack: [$idx] ${item}")
+    Sidebar(
+        modifier = modifier,
+        collapsible = collapsible,
+        showRail = collapsible != SidebarCollapsible.None,
+    ) {
+        Header {
+            if (isExpanded) {
+                H4(stringResource(Res.string.root_layout_shadcn_for_compose))
+            }
         }
-    }
-
-    SidebarProvider {
-        Row(Modifier.fillMaxSize().background(Theme[ColorProps][ColorTokens.sidebar]).safeDrawingPadding()) {
-            // LeftSideBar
-            Sidebar(
-                modifier = Modifier.fillMaxHeight(),
-                collapsible = SidebarCollapsible.Icon,
-            ) {
-                Header {
-                    if (isExpanded) {
-                        H4(stringResource(Res.string.root_layout_shadcn_for_compose))
+        Content {
+            Group {
+                Menu {
+                    Item {
+                        Button(
+                            label = s_root_layout_overview,
+                            onClick = {
+                                navStack.clear()
+                                navStack.add(Overview)
+                                onNavigate()
+                            },
+                            isSelected = currentScreen == Overview
+                        )
+                    }
+                    Item {
+                        Button(
+                            label = s_root_layout_icons,
+                            onClick = {
+                                navStack.clear()
+                                navStack.add(Icons)
+                                onNavigate()
+                            },
+                            isSelected = currentScreen == Icons
+                        )
                     }
                 }
-                Content {
-                    Group {
-                        Menu {
-                            Item {
-                                Button(
-                                    label = s_root_layout_overview,
-                                    onClick = {
-                                        navStack.clear()
-                                        navStack.add(Overview)
-                                    },
-                                    isSelected = currentScreen == Overview
-                                )
-                            }
-                            Item {
-                                Button(
-                                    label = s_root_layout_icons,
-                                    onClick = {
-                                        navStack.clear()
-                                        navStack.add(Icons)
-                                    },
-                                    isSelected = currentScreen == Icons
-                                )
-                            }
-                        }
-                    }
-                    Separator()
-                    Group {
-                        Label(s_root_layout_components)
-                        Menu {
-                            registryEntries.forEach {
-                                Item(key = it.key.id) {
-                                    Button(
-                                        label = it.value.name,
-                                        isSelected = currentScreen is Component && it.key == currentScreen.id,
-                                        onClick = {
-                                            navStack.clear()
-                                            navStack.add(Component(it.key))
-                                        }
-                                    )
+            }
+            Separator()
+            Group {
+                Label(s_root_layout_components)
+                Menu {
+                    registryEntries.forEach {
+                        Item(key = it.key.id) {
+                            Button(
+                                label = it.value.name,
+                                isSelected = currentScreen is Component && it.key == currentScreen.id,
+                                onClick = {
+                                    navStack.clear()
+                                    navStack.add(Component(it.key))
+                                    onNavigate()
                                 }
-                            }
+                            )
                         }
                     }
                 }
-                Footer {
-                    if (isExpanded) {
-                        H4(stringResource(Res.string.root_layout_text_in_footer))
-                    }
-                }
             }
-
-            // WorkSpace
-            Column(Modifier.fillMaxSize().weight(1f, fill = true)) {
-                ToolBar()
-                Box(Modifier.fillMaxSize().padding(16.dp)) {
-                    content()
-                }
+        }
+        Footer {
+            if (isExpanded) {
+                H4(stringResource(Res.string.root_layout_text_in_footer))
             }
         }
     }
+
 }
 

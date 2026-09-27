@@ -18,6 +18,7 @@ import com.github.jershell.shadcn.theme.ShadcnTheme
 import com.mikepenz.markdown.compose.components.markdownComponents
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RenderingInteractionTest {
     @Test
@@ -76,6 +77,40 @@ class RenderingInteractionTest {
     fun imageWithoutDataKeepsAccessibleDescription() = runComposeUiTest {
         setContent { ShadcnTheme { Image(alt = "Generated landscape") } }
         onNodeWithContentDescription("Generated landscape").assertExists()
+    }
+
+    @Test
+    fun markdownTasksRenderOneReadonlyCheckboxBesideEachFormattedLabel() = runComposeUiTest {
+        setContent { ShadcnTheme {
+            Markdown("- [x] **Completed**\n- [ ] Pending\n- [X] Uppercase\n- Ordinary item", immediate = true)
+        } }
+        val checkboxes = onAllNodes(isToggleable())
+        checkboxes.assertCountEquals(3)
+        checkboxes[0].assertIsOn().assertIsNotEnabled()
+        checkboxes[1].assertIsOff().assertIsNotEnabled()
+        checkboxes[2].assertIsOn().assertIsNotEnabled()
+        listOf("Completed", "Pending", "Uppercase").forEachIndexed { index, label ->
+            onAllNodesWithText(label).assertCountEquals(1)
+            val indicator = checkboxes[index].fetchSemanticsNode().boundsInRoot
+            val text = onNodeWithText(label).fetchSemanticsNode().boundsInRoot
+            assertTrue(indicator.right <= text.left, "$label must sit beside its checkbox")
+            assertTrue(indicator.top < text.bottom && text.top < indicator.bottom,
+                "$label and its checkbox must occupy the same row")
+        }
+        onNodeWithText("Ordinary item").assertExists()
+        listOf("[x]", "[X]", "[ ]", "-").forEach { onAllNodesWithText(it).assertCountEquals(0) }
+    }
+
+    @Test
+    fun markdownListFallbackPreservesNestedItemsOrderedStartsAndLiteralHtml() = runComposeUiTest {
+        setContent { ShadcnTheme {
+            Markdown("- [x] Parent\n  - Nested label\n\n3. Third\n4. Fourth\n\n<div>literal HTML</div>", immediate = true)
+        } }
+        onAllNodes(isToggleable()).assertCountEquals(1)
+        listOf("Parent", "Nested label", "Third", "Fourth", "<div>literal HTML</div>")
+            .forEach { onNodeWithText(it).assertExists() }
+        listOf("3. ", "4. ").forEach { onNodeWithText(it).assertExists() }
+        onAllNodesWithText("[x]").assertCountEquals(0)
     }
 
     @Test

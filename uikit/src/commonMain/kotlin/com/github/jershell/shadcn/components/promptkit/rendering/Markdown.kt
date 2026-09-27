@@ -2,6 +2,7 @@ package com.github.jershell.shadcn.components.promptkit
 
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,6 +15,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextDecoration
 import com.composeunstyled.theme.Theme
+import com.github.jershell.shadcn.components.checkbox.Checkbox
+import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
 import com.github.jershell.shadcn.theme.TypographyStyles
@@ -21,6 +24,8 @@ import com.github.jershell.shadcn.theme.LocalEditorTextTheme
 import com.github.jershell.shadcn.theme.shadcnMonospaceFontFamily
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.Markdown as CoreMarkdown
+import com.mikepenz.markdown.compose.LocalMarkdownComponents
+import com.mikepenz.markdown.compose.MarkdownElement
 import com.mikepenz.markdown.compose.components.MarkdownComponents
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.model.DefaultMarkdownColors
@@ -59,8 +64,23 @@ object PromptMarkdownDefaults {
     }
 
     fun components(): MarkdownComponents = markdownComponents(
-        custom = { _, model ->
-            BasicText(model.content.substring(model.node.startOffset, model.node.endOffset), style = model.typography.text)
+        custom = { type, model ->
+            if (type.name.contains("HTML")) {
+                BasicText(model.content.substring(model.node.startOffset, model.node.endOffset), style = model.typography.text)
+            } else {
+                // Match the core renderer's normal fallback. List markers are structural leaf nodes;
+                // printing every unknown token repeats the bullet/checkbox inside the label column.
+                val components = LocalMarkdownComponents.current
+                model.node.children.forEach { child ->
+                    MarkdownElement(child, components, model.content, includeSpacer = false)
+                }
+            }
+        },
+        checkbox = { model ->
+            val marker = model.content.substring(model.node.startOffset, model.node.endOffset)
+            // GFM task inputs are read-only in rendered chat text, as in react-markdown.
+            Checkbox(checked = marker.contains("[x]", ignoreCase = true), onCheckedChange = {}, enabled = false,
+                modifier = Modifier.padding(top = BaseTokens.token4, end = BaseTokens.token8))
         },
         codeFence = { model ->
             val fence = extractFencedCode(model.content.substring(model.node.startOffset, model.node.endOffset))

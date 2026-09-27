@@ -93,6 +93,23 @@ jobs:
       # The final Wasm IR link includes the full generated icon gallery. Give it
       # one heap instead of competing Gradle/Kotlin daemons and Android workers.
       - run: bash ./gradlew :demoApp:webApp:wasmJsBrowserDevelopmentExecutableDistribution --max-workers=1 --no-parallel --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx5g' '-Pkotlin.compiler.execution.strategy=in-process'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: uikit/src/jvmTest/terminal/package-lock.json
+      - run: npm ci
+        working-directory: uikit/src/jvmTest/terminal
+      - run: npx playwright install --with-deps chromium
+        working-directory: uikit/src/jvmTest/terminal
+      - name: Exercise assembled galleries and terminal host
+        run: npm run test:gallery
+        working-directory: uikit/src/jvmTest/terminal
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wasm-gallery-screenshots
+          path: build/reports/wasm-gallery/
       - uses: actions/upload-artifact@v4
         with:
           name: wasm-demo

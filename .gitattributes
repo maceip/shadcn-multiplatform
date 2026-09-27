@@ -1,0 +1,7 @@
+# Preserve the exact upstream bytes recorded in terminal/assets.json on Windows.
+uikit/src/commonMain/composeResources/files/terminal/xterm.js -text
+uikit/src/commonMain/composeResources/files/terminal/xterm.css -text
+uikit/src/commonMain/composeResources/files/terminal/addon-fit.js -text
+uikit/src/commonMain/composeResources/files/terminal/LICENSE.xterm -text
+uikit/src/commonMain/composeResources/files/terminal/LICENSE.addon-fit -text
+*.otf binary
