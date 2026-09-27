@@ -51,7 +51,7 @@ internal val LocalTooltipContentColor = staticCompositionLocalOf { Color.Unspeci
  * Shows on hover (shadcn uses delayDuration = 0) and while the anchor has keyboard
  * focus; hides on mouse leave or Escape.
  *
- * The application root must be wrapped in [com.composeunstyled.ModalHost]
+ * The application root must be wrapped in [com.github.jershell.shadcn.containers.ShadcnUI]
  * (or [com.composeunstyled.PortalHost]) so the panel can be portaled.
  *
  * @param tooltip Panel content; composed only while the tooltip is visible.

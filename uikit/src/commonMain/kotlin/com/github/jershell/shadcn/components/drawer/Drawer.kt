@@ -68,6 +68,8 @@ import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.UnstyledModalBottomSheet
 import com.composeunstyled.rememberModalBottomSheetState
 import com.composeunstyled.theme.Theme
+import com.github.jershell.shadcn.components.modal.ShadcnModalLayer
+import com.github.jershell.shadcn.components.modal.ShadcnModalContentLifecycle
 import com.github.jershell.shadcn.generated.resources.Res
 import com.github.jershell.shadcn.generated.resources.drawer_close
 import com.github.jershell.shadcn.theme.BaseTokens
@@ -121,7 +123,8 @@ class DrawerScope internal constructor(
  *    `showDragHandle = false`, `showCloseButton = true` — a plain slide-in panel with
  *    the close (X) button, like the reference `sheet.tsx` built on Radix Dialog.
  *
- * Uses the platform modal layer under [com.github.jershell.shadcn.containers.ShadcnUI].
+ * Under [com.github.jershell.shadcn.containers.ShadcnUI], native targets use the
+ * platform modal layer and Web uses a shared canvas modal stack with focus isolation.
  *
  * @param open Whether the drawer is visible.
  * @param onOpenChange Called when the user dismisses the drawer (scrim click,
@@ -206,53 +209,56 @@ private fun BottomDrawer(
         sheetState.targetDetent = if (open) SheetDetent.FullyExpanded else SheetDetent.Hidden
     }
 
-    UnstyledModalBottomSheet(
-        state = sheetState,
-        enabled = draggable,
-        properties = ModalBottomSheetProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            offsetForIme = false,
-        ),
-        onDismiss = { onOpenChange(false) },
-        overlay = {
-            Scrim(
-                scrimColor = DrawerScrimColor, // bg-black/50
-                enter = fadeIn(tween(motionDurationMillis(200))),
-                exit = fadeOut(tween(motionDurationMillis(200))),
-            )
-        },
-    ) {
-        PortalHost(Modifier.fillMaxSize()) {
-            val panelFocus = remember { FocusRequester() }
-            val contentFocus = remember { FocusRequester() }
-            LaunchedEffect(Unit) {
-                if (!contentFocus.requestFocus()) panelFocus.requestFocus()
-            }
-            Sheet(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .background(Theme[ColorProps][ColorTokens.background])
-                    .onKeyEvent { event ->
-                        if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Back)) {
-                            onOpenChange(false)
-                            true
-                        } else false
-                    }
-                    .focusRequester(panelFocus)
-                    .focusable(),
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val maxPanelHeight = maxHeight * maxHeightFraction
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = maxPanelHeight)
-                            .verticalScroll(rememberScrollState())
-                            .focusRequester(contentFocus),
-                    ) {
-                        if (showDragHandle) DragHandle()
-                        content()
+    ShadcnModalLayer(open) {
+        UnstyledModalBottomSheet(
+            state = sheetState,
+            enabled = draggable,
+            properties = ModalBottomSheetProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                offsetForIme = false,
+            ),
+            onDismiss = { onOpenChange(false) },
+            overlay = {
+                Scrim(
+                    scrimColor = DrawerScrimColor, // bg-black/50
+                    enter = fadeIn(tween(motionDurationMillis(200))),
+                    exit = fadeOut(tween(motionDurationMillis(200))),
+                )
+            },
+        ) {
+            ShadcnModalContentLifecycle()
+            PortalHost(Modifier.fillMaxSize()) {
+                val panelFocus = remember { FocusRequester() }
+                val contentFocus = remember { FocusRequester() }
+                LaunchedEffect(Unit) {
+                    if (!contentFocus.requestFocus()) panelFocus.requestFocus()
+                }
+                Sheet(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .background(Theme[ColorProps][ColorTokens.background])
+                        .onKeyEvent { event ->
+                            if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Back)) {
+                                onOpenChange(false)
+                                true
+                            } else false
+                        }
+                        .focusRequester(panelFocus)
+                        .focusable(),
+                ) {
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val maxPanelHeight = maxHeight * maxHeightFraction
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = maxPanelHeight)
+                                .verticalScroll(rememberScrollState())
+                                .focusRequester(contentFocus),
+                        ) {
+                            if (showDragHandle) DragHandle()
+                            content()
+                        }
                     }
                 }
             }
@@ -302,52 +308,55 @@ private fun SideDrawer(
         slideOutHorizontally(tween(motionDurationMillis(300))) { -it } + fadeOut(tween(motionDurationMillis(200)))
     }
 
-    UnstyledDialog(
-        visible = open,
-        onDismissRequest = { onOpenChange(false) },
-        properties = DialogProperties(),
-        overlay = {
-            Scrim(
-                scrimColor = DrawerScrimColor, // bg-black/50
-                enter = fadeIn(tween(motionDurationMillis(200))),
-                exit = fadeOut(tween(motionDurationMillis(200))),
-            )
-        },
-    ) {
-        PortalHost(Modifier.fillMaxSize()) {
-            DialogPanel(
-                modifier = Modifier.fillMaxSize().wrapContentSize(
-                    if (alignToEnd) Alignment.CenterEnd else Alignment.CenterStart,
-                ),
-                enter = enter,
-                exit = exit,
-            ) {
-                val colors = resolveDrawerPanelColors()
-                val contentFocus = remember { FocusRequester() }
-                LaunchedEffect(Unit) { contentFocus.requestFocus() }
-                Box(
-                    modifier = modifier
-                        .fillMaxHeight()
-                        .width(panelWidth)
-                        .shadow(
-                            elevation = Effects.boxShadowShadowLgToken0.radius,
-                            shape = RectangleShape,
-                            clip = false,
-                            ambientColor = Effects.boxShadowShadowLgToken0.color,
-                            spotColor = Effects.boxShadowShadowLgToken1.color,
-                        )
-                        .background(colors.background)
-                        .focusable(),
+    ShadcnModalLayer(open) {
+        UnstyledDialog(
+            visible = open,
+            onDismissRequest = { onOpenChange(false) },
+            properties = DialogProperties(),
+            overlay = {
+                Scrim(
+                    scrimColor = DrawerScrimColor, // bg-black/50
+                    enter = fadeIn(tween(motionDurationMillis(200))),
+                    exit = fadeOut(tween(motionDurationMillis(200))),
+                )
+            },
+        ) {
+            ShadcnModalContentLifecycle()
+            PortalHost(Modifier.fillMaxSize()) {
+                DialogPanel(
+                    modifier = Modifier.fillMaxSize().wrapContentSize(
+                        if (alignToEnd) Alignment.CenterEnd else Alignment.CenterStart,
+                    ),
+                    enter = enter,
+                    exit = exit,
                 ) {
-                    Column(Modifier.fillMaxSize().focusRequester(contentFocus), content = content)
-                    EdgeLine(
-                        panelAtEnd = alignToEnd,
-                        modifier = Modifier.align(if (alignToEnd) Alignment.CenterStart else Alignment.CenterEnd),
-                    )
-                    if (showCloseButton) {
-                        CloseButton(
-                            modifier = Modifier.align(Alignment.TopEnd).padding(BaseTokens.token16),
+                    val colors = resolveDrawerPanelColors()
+                    val contentFocus = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { contentFocus.requestFocus() }
+                    Box(
+                        modifier = modifier
+                            .fillMaxHeight()
+                            .width(panelWidth)
+                            .shadow(
+                                elevation = Effects.boxShadowShadowLgToken0.radius,
+                                shape = RectangleShape,
+                                clip = false,
+                                ambientColor = Effects.boxShadowShadowLgToken0.color,
+                                spotColor = Effects.boxShadowShadowLgToken1.color,
+                            )
+                            .background(colors.background)
+                            .focusable(),
+                    ) {
+                        Column(Modifier.fillMaxSize().focusRequester(contentFocus), content = content)
+                        EdgeLine(
+                            panelAtEnd = alignToEnd,
+                            modifier = Modifier.align(if (alignToEnd) Alignment.CenterStart else Alignment.CenterEnd),
                         )
+                        if (showCloseButton) {
+                            CloseButton(
+                                modifier = Modifier.align(Alignment.TopEnd).padding(BaseTokens.token16),
+                            )
+                        }
                     }
                 }
             }

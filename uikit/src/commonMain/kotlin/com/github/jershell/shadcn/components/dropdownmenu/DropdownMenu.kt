@@ -111,7 +111,7 @@ internal val DropdownMenuEntryScopeInstance: DropdownMenuEntryScope = object : D
  * navigation (arrows/Home/End/Enter), Escape to close, click outside to close,
  * Tab exits the menu and continues focus traversal.
  *
- * The application root must be wrapped in [com.composeunstyled.ModalHost] so the
+ * The application root must be wrapped in [com.github.jershell.shadcn.containers.ShadcnUI] so the
  * menu panel can be portaled to a window-sized overlay.
  *
  * Use [DropdownMenuContent] inside the [content] slot and fill it with

@@ -186,7 +186,7 @@ internal val LocalComboboxItemContentColor = compositionLocalOf { Color.Unspecif
  * the popup, Escape closes the popup. In multi-select mode, Backspace on an empty query
  * removes the last chip.
  *
- * The application root must be wrapped in [com.composeunstyled.ModalHost] so the popover
+ * The application root must be wrapped in [com.github.jershell.shadcn.containers.ShadcnUI] so the popover
  * panel can be portaled to a window-sized overlay.
  *
  * @param items The selectable options.

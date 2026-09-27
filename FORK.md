@@ -4,7 +4,7 @@ This fork starts from upstream `6ce110d5ff63230d4929ce1e7d2bcaad04a4b521` (1.0.2
 
 ## Behavior changes
 
-- `ShadcnUI` uses `PortalHost` for non-modal content and lets Unstyled use Compose platform dialogs. Direct dialogs and the managed FIFO host now share `DialogPanel`, including inside-click consumption and modal animation lifecycle. Initial control focus, an empty-panel fallback, focus isolation/restoration, nested dialogs and dismissal flags have regression tests. Side drawers use the same panel primitive; their close buttons and edge borders stay within the drawer surface. Bottom drawers explicitly focus their content and handle Escape/back.
+- `ShadcnUI` uses `PortalHost` for non-modal content and lets Unstyled use Compose platform dialogs on native targets. Wasm uses a focus-isolated in-scene stack to contain a Compose Web semantics-owner disposal defect; see [Web modal containment](docs/WEB_MODAL_CONTAINMENT.md). Direct dialogs and the managed FIFO host share `DialogPanel`, including inside-click consumption and modal animation lifecycle. Initial control focus, an empty-panel fallback, focus isolation/restoration, nested dialogs and dismissal flags have regression tests. Side drawers use the same panel primitive; their close buttons and edge borders stay within the drawer surface. Bottom drawers explicitly focus their content and handle Escape/back.
 - Dialog queue callbacks run once when exiting. Reentrant cancellation/clear calls cannot recursively invoke cancellation or discard a newly queued dialog.
 - Submenus open with the forward horizontal arrow and close one level with the reverse arrow or Escape, returning focus to their trigger. Arrows mirror in RTL. Menu navigation includes submenu anchors, skips disabled items, wraps, and supports Home/End. Selecting a nested action closes its ancestors. A measured side selector preserves submenu flipping at window edges.
 - Context menus support touch/stylus long-press as well as secondary mouse clicks. The opening release is consumed. Platform modals isolate focus, and the menu supports keyboard navigation and dismissal.
@@ -13,7 +13,7 @@ This fork starts from upstream `6ce110d5ff63230d4929ce1e7d2bcaad04a4b521` (1.0.2
 
 ## Integration
 
-Use `ShadcnUI` as the application's theme/host. **Do not put an external Unstyled `ModalHost` around it**: doing so explicitly selects the old in-app modal path and bypasses the focus isolation fixed here. `PortalHost` remains appropriate for non-modal portals. Dialogs and drawers provide a portal host within their platform window for nested popovers/tooltips.
+Use `ShadcnUI` as the application's theme/host. **Do not put an external Unstyled `ModalHost` around it**: doing so overrides the native platform modal path and bypasses its focus isolation. `ShadcnUI` selects the tested Web containment internally. `PortalHost` remains appropriate for non-modal portals. Dialogs and drawers provide a portal host within their layer for nested popovers/tooltips.
 
 The source package names and upstream Maven coordinates are unchanged. No release of this fork has been published. Build/use this checkout as a source dependency; the upstream Maven artifact does not include these changes.
 

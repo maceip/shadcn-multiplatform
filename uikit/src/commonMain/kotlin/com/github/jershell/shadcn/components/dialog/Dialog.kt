@@ -51,6 +51,8 @@ import com.composeunstyled.UnstyledButton
 import com.composeunstyled.UnstyledDialog
 import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.theme.Theme
+import com.github.jershell.shadcn.components.modal.ShadcnModalLayer
+import com.github.jershell.shadcn.components.modal.ShadcnModalContentLifecycle
 import com.github.jershell.shadcn.generated.resources.Res
 import com.github.jershell.shadcn.generated.resources.dialog_close
 import com.github.jershell.shadcn.theme.BaseTokens
@@ -79,9 +81,10 @@ interface DialogScope {
  * A modal dialog styled after the shadcn/ui Dialog: a centered `max-w-lg` panel with
  * `bg-background p-6 gap-4 rounded-lg border shadow-lg` over a black/50 scrim.
  *
- * Rendered through [com.composeunstyled.UnstyledDialog] and its platform dialog layer,
- * which isolates keyboard focus from the application and restores it on dismissal,
- * and dismisses on Escape/back press and outside clicks per [properties].
+ * Rendered through [com.composeunstyled.UnstyledDialog]. Under
+ * [com.github.jershell.shadcn.containers.ShadcnUI], native targets use the platform
+ * dialog layer and Web uses a shared canvas modal stack. Both isolate keyboard focus,
+ * restore it on dismissal, and dismiss on Escape/back press and outside clicks per [properties].
  *
  * Build the panel with [DialogHeader] / [DialogTitle] / [DialogDescription] /
  * [DialogFooter]; use [DialogScope.close] to dismiss from inside the content.
@@ -116,34 +119,37 @@ fun Dialog(
         }
     }
 
-    UnstyledDialog(
-        visible = open,
-        onDismissRequest = { currentOnOpenChange(false) },
-        properties = properties,
-        overlay = {
-            Scrim(
-                scrimColor = DialogScrimColor, // bg-black/50
-                enter = fadeIn(shadcnTween(250)),
-                exit = fadeOut(shadcnTween(DialogAnimMillis)),
-            )
-        },
-    ) {
-        PortalHost(Modifier.fillMaxSize()) {
-            DialogPanel(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(BaseTokens.token32)
-                    .wrapContentSize(Alignment.Center),
-                enter = dialogEnter(),
-                exit = dialogExit(),
-            ) {
-                DialogPanelBox(
-                    modifier = modifier,
-                    showCloseButton = showCloseButton,
-                    contentPadding = contentPadding,
-                    onClose = { currentOnOpenChange(false) },
-                    content = { scope.content() },
+    ShadcnModalLayer(open) {
+        UnstyledDialog(
+            visible = open,
+            onDismissRequest = { currentOnOpenChange(false) },
+            properties = properties,
+            overlay = {
+                Scrim(
+                    scrimColor = DialogScrimColor, // bg-black/50
+                    enter = fadeIn(shadcnTween(250)),
+                    exit = fadeOut(shadcnTween(DialogAnimMillis)),
                 )
+            },
+        ) {
+            ShadcnModalContentLifecycle()
+            PortalHost(Modifier.fillMaxSize()) {
+                DialogPanel(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(BaseTokens.token32)
+                        .wrapContentSize(Alignment.Center),
+                    enter = dialogEnter(),
+                    exit = dialogExit(),
+                ) {
+                    DialogPanelBox(
+                        modifier = modifier,
+                        showCloseButton = showCloseButton,
+                        contentPadding = contentPadding,
+                        onClose = { currentOnOpenChange(false) },
+                        content = { scope.content() },
+                    )
+                }
             }
         }
     }

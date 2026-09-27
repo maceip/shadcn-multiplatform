@@ -80,8 +80,8 @@ private const val TIMER_TICK_MILLIS = 100L
  * Window-level overlay rendering the toast queue of [manager], styled after the
  * shadcn/ui Sonner toaster and positioned like the Base UI toast viewport.
  *
- * Compose this host inside a window-sized parent (the [com.composeunstyled.ModalHost]
- * of the application root); it fills all available space as a non-interactive overlay.
+ * [com.github.jershell.shadcn.containers.ShadcnUI] installs this host in a window-sized parent.
+ * It fills all available space as a non-interactive overlay.
  * Pointer events outside the toast stack pass through to the content below.
  *
  * Stacked mode ([ToasterConfig.stacked]) renders a Sonner-style deck: collapsed it shows

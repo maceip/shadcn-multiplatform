@@ -52,7 +52,7 @@ internal val LocalPopoverScope = staticCompositionLocalOf<PopoverScope?> { null 
  * focus while the popover is open. That is what makes editable triggers, such as the Combobox
  * input, able to receive typed characters while the popup is visible.
  *
- * The application root must be wrapped in [com.composeunstyled.ModalHost] (or [com.composeunstyled.PortalHost])
+ * The application root must be wrapped in [com.github.jershell.shadcn.containers.ShadcnUI] (or [com.composeunstyled.PortalHost])
  * so the panel can be portaled to a window-sized overlay.
  *
  * Clicking outside the panel or pressing Escape closes the popover.

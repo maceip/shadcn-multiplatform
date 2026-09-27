@@ -110,6 +110,15 @@ fun DemoDialog() {
                     DialogDescription(stringResource(Res.string.dialog_make_changes_to_your_profile_here_click_save_whe))
                 }
                 P(stringResource(Res.string.dialog_you_can_also_dismiss_this_dialog_with_the_close))
+                var nestedOpen by remember { mutableStateOf(false) }
+                Button(onClick = { nestedOpen = true }) { ButtonText("Open nested dialog") }
+                Dialog(open = nestedOpen, onOpenChange = { nestedOpen = it }) {
+                    DialogHeader {
+                        DialogTitle("Nested dialog")
+                        DialogDescription("Closing this panel restores the parent dialog and its keyboard focus.")
+                    }
+                    Button(onClick = { nestedOpen = false }) { ButtonText("Close nested dialog") }
+                }
                 DialogFooter {
                     Button(onClick = { basicOpen = false }, variant = ButtonVariant.Outline) {
                         ButtonText(stringResource(Res.string.dialog_close))

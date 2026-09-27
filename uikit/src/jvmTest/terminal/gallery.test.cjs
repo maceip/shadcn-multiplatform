@@ -75,14 +75,10 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
             await button('Overview').waitFor();
             await page.keyboard.press('Escape');
             await button('Overview').waitFor({ state: 'hidden' });
-            // Modal canvases have their own on-demand accessibility surface.
-            // Resume keyboard navigation in the parent after dismissal.
-            await page.keyboard.press('Tab');
             await activate('Open navigation');
             await button('Overview').waitFor();
             await activate('Metal button');
             await button('Overview').waitFor({ state: 'hidden' });
-            await page.keyboard.press('Tab');
           }
         }
         await page.screenshot({ path: path.join(screenshots, `${name}-${width}.png`) });
@@ -140,6 +136,20 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
       return count;
     }, controlPixels);
     assert.ok(visibleInk > 10, 'the HTML terminal does not visually cover the Compose controls below it');
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await page.waitForTimeout(350);
+    await activate('Open navigation');
+    await button('Overview').waitFor();
+    assert.equal(await page.locator('iframe[title="Terminal"]').isVisible(), false, 'modal content covers the native HTML surface');
+    assert.equal(await page.locator('iframe[title="Terminal"]').getAttribute('inert'), '');
+    assert.equal(await button('Clear').count(), 0, 'background controls are absent from the modal accessibility tree');
+    await terminalFrame.evaluate(() => shadcnTerminal.dispatch({ type: 'input', data: 'background-bridge' }));
+    await terminalFrame.waitForFunction(() => terminalCommands.some(command => command.type === 'write' && command.data.includes('background-bridge')));
+    await page.keyboard.press('Escape');
+    await button('Open navigation').waitFor();
+    assert.equal(await page.locator('iframe[title="Terminal"]').isVisible(), true);
+    assert.equal(await page.locator('iframe[title="Terminal"]').getAttribute('inert'), null);
+    assert.ok(page.frames().includes(terminalFrame), 'modal dismissal preserves the existing terminal frame');
     await capture('terminal');
     const dimensions = await page.evaluate(() => terminalCommands.filter(event => event.type === 'resize').map(event => event.columns));
     assert.ok(new Set(dimensions).size > 1, 'Compose viewport resize reaches the iframe engine');
@@ -148,6 +158,26 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     await navigate('Metal button');
     await button('Upgrade to Pro').waitFor();
     assert.equal(await page.locator('iframe[title="Terminal"]').count(), 0, 'navigation disposes the native HTML host');
+
+    await navigate('Dialog');
+    await activate('Open dialog');
+    await button('Open nested dialog').waitFor();
+    assert.equal(await button('Metal button').count(), 0, 'dialog isolates background semantics');
+    await activate('Open nested dialog');
+    await button('Close nested dialog').waitFor();
+    assert.equal(await button('Open nested dialog').count(), 0, 'nested dialog isolates its parent');
+    await page.keyboard.press('Escape');
+    await button('Open nested dialog').waitFor();
+    await page.keyboard.press('Escape');
+    await button('Open dialog').waitFor();
+    await button('Metal button').waitFor();
+    await navigate('Drawer');
+    await activate('Open drawer');
+    await button('Cancel').waitFor();
+    assert.equal(await button('Metal button').count(), 0, 'bottom sheet isolates background semantics');
+    await activate('Cancel');
+    await button('Open drawer').waitFor();
+    await button('Metal button').waitFor();
     assert.deepEqual(errors, [], 'no runtime exceptions or failed resources');
   } catch (error) {
     if (page) {
