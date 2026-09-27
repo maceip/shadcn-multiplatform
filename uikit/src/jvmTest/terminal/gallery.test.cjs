@@ -158,7 +158,10 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     assert.equal(await page.locator('iframe[title="Terminal"]').getAttribute('inert'), '');
     assert.equal(await button('Clear').count(), 0, 'background controls are absent from the modal accessibility tree');
     await terminalFrame.evaluate(() => shadcnTerminal.dispatch({ type: 'input', data: 'background-bridge' }));
-    await terminalFrame.waitForFunction(() => terminalCommands.some(command => command.type === 'write' && command.data.includes('background-bridge')));
+    // Hidden iframes suspend animation frames; poll the bridge on a timer instead.
+    await terminalFrame.waitForFunction(() => terminalCommands.some(command => command.type === 'write' && command.data.includes('background-bridge')), null, { polling: 50 });
+    const hiddenWrite = await terminalFrame.evaluate(() => terminalCommands.find(command => command.type === 'write' && command.data.includes('background-bridge')));
+    await page.waitForFunction(id => terminalCommands.some(event => event.type === 'ack' && event.id === id), hiddenWrite.id);
     await page.keyboard.press('Escape');
     await button('Open navigation').waitFor();
     assert.equal(await page.locator('iframe[title="Terminal"]').isVisible(), true);
