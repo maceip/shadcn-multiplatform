@@ -29,7 +29,22 @@ internal fun markdownTaskLabel(model: MarkdownComponentModel): String {
     val paragraph = item?.children?.firstOrNull { it.type == MarkdownElementTypes.PARAGRAPH }
         ?: return "Task"
     val settings = annotatorSettings()
-    return buildAnnotatedString {
+    val rendered = buildAnnotatedString {
         buildMarkdownAnnotatedString(model.content, paragraph, settings)
-    }.text.trim().ifEmpty { "Task" }
+    }.text
+    return normalizeMarkdownTaskLabel(rendered).ifEmpty { "Task" }
+}
+
+/** Inline code adds visual padding spaces. Accessible names use flat, single-space whitespace. */
+internal fun normalizeMarkdownTaskLabel(text: String): String = buildString {
+    var pendingSpace = false
+    for (character in text) {
+        if (character.isWhitespace()) {
+            pendingSpace = isNotEmpty()
+        } else {
+            if (pendingSpace) append(' ')
+            append(character)
+            pendingSpace = false
+        }
+    }
 }

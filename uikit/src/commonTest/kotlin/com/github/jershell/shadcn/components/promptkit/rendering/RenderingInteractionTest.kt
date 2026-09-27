@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import com.github.jershell.shadcn.theme.ShadcnTheme
@@ -106,6 +107,11 @@ class RenderingInteractionTest {
     fun markdownTaskAccessibleNameUsesFormattedLabelAndUpdatesWithStreamingContent() = runComposeUiTest {
         var source by mutableStateOf("- [ ] **Bold** [linked](https://example.com) `inline`")
         setContent { ShadcnTheme { Markdown(source, immediate = true) } }
+        val actualDescription = onAllNodes(isToggleable()).fetchSemanticsNodes().single()
+            .config[SemanticsProperties.ContentDescription]
+        assertEquals(listOf("Bold linked inline"), actualDescription,
+            "Task accessible name contains formatting padding; code points: " +
+                actualDescription.joinToString { label -> label.map { "U+" + it.code.toString(16).padStart(4, '0') }.joinToString(" ") })
         onNodeWithContentDescription("Bold linked inline").assertIsOff().assertIsNotEnabled()
         runOnIdle { source = "- [x] **Finished**" }
         onNodeWithContentDescription("Bold linked inline").assertDoesNotExist()

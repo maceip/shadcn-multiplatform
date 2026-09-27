@@ -14,6 +14,13 @@ import kotlin.test.assertTrue
 
 class RenderingModelTest {
     @Test
+    fun taskAccessibleNameCollapsesVisualWhitespaceWithoutChangingWords() {
+        assertEquals("Bold linked inline", normalizeMarkdownTaskLabel("  Bold linked  inline  "))
+        assertEquals("A B C λ 👋", normalizeMarkdownTaskLabel("A\u00a0\u00a0B\tC\nλ\r\n👋\u202f"))
+        assertEquals("", normalizeMarkdownTaskLabel(" \t\n"))
+    }
+
+    @Test
     fun markdownLinksOnlyAllowDeclaredWebAndContactSchemes() {
         listOf("https://example.com", "HTTP://example.com", "mailto:a@example.com", "tel:+15551234567")
             .forEach { assertTrue(isSafeMarkdownUrl(it), it) }
