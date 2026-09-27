@@ -1,6 +1,6 @@
 # Fork maintenance notes
 
-This fork starts from upstream `6ce110d5ff63230d4929ce1e7d2bcaad04a4b521` (1.0.2-dev). Compose Unstyled stays pinned to **2.9.0**. The changes repair integration and custom-component behavior; they do not replace the underlying dependency or add components.
+This fork starts from upstream `6ce110d5ff63230d4929ce1e7d2bcaad04a4b521` (1.0.2-dev). Compose Unstyled stays pinned to **2.9.0**. The changes repair integration and custom-component behavior; they do not replace the underlying dependency. The subsequent agent-interface extension is documented below.
 
 ## Behavior changes
 
@@ -33,4 +33,12 @@ These checks do not constitute physical-device, IME, screen-reader, browser-runt
 
 ## Still open
 
-See `BACKLOG.md` for remaining work, including general Tooltip/DropdownMenu/Select/Calendar collision flipping, submenu hover intent, and other component features. This fork does not supply a code editor or terminal engine. No upstream contribution or package publication is performed automatically.
+See `BACKLOG.md` for remaining work, including general Tooltip/DropdownMenu/Select/Calendar collision flipping, submenu hover intent, and other component features. This fork now embeds xterm.js as its terminal engine; a full code editor remains application-level work. No upstream contribution or package publication is performed automatically.
+
+## Agent-interface extension
+
+The user-requested extension adds the complete Prompt Kit component-family/export inventory, composition blocks, provider-neutral chat primitives, xterm.js platform hosts, metal-fx button, Soviet/Flume text themes, Departure Mono, and a shared motion policy. [UIREQ_IMPLEMENTATION](docs/UIREQ_IMPLEMENTATION.md) is the completion and validation record for this extension; the 56-test result above describes the earlier interaction-fix baseline only.
+
+New dependencies are pinned centrally: Material-free Markdown renderer 0.44.0, Highlights 1.1.0, FileKit 0.15.0, and JCEF 146.0.10 on desktop. Markdown and FileKit are pinned to releases compatible with Compose 1.11.1; Coil remains 3.5.0 and Compose Unstyled remains 2.9.0. Native browser engines are platform-specific; desktop consumers choose a matching bundled JCEF artifact. No remote inference service or terminal shell is started by the SDK.
+
+Source snapshots, inventories, source/theme/font licenses and rendering boundaries are retained under `imports/` and `docs/`. Runtime resources include required notices alongside the offline assets. React component files cannot be installed directly into Compose; the JSX preview is deliberately a native declarative renderer with documented supported bindings.

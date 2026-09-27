@@ -1,0 +1,10 @@
+{
+  "website": "https://departuremono.com/",
+  "repository": "https://github.com/rektdeckard/departure-mono",
+  "revision": "75152a3f1e6dacdd248a6c397c97dbf27e33eea0",
+  "release": "v1.500",
+  "sourcePath": "public/assets/DepartureMono-1.500.otf",
+  "license": "SIL-OFL-1.1",
+  "sha256": "4d53f663155cf8bf7ffc8e688776e719625f7bbb80a8d90073438b249261a2e0",
+  "modifications": "Unmodified font bytes; packaged filename changed only."
+}

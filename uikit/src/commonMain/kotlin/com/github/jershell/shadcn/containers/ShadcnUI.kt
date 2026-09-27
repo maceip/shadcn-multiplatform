@@ -8,6 +8,7 @@ import com.github.jershell.shadcn.components.toast.ToastHost
 import com.github.jershell.shadcn.theme.Mode
 import com.github.jershell.shadcn.theme.ShadcnPreset
 import com.github.jershell.shadcn.theme.ShadcnTheme
+import com.github.jershell.shadcn.motion.ShadcnMotion
 
 /**
  * Application theme, non-modal portal layer, and managed dialog/toast hosts.
@@ -19,15 +20,18 @@ fun ShadcnUI(
     mode: Mode = if (isSystemInDarkTheme()) Mode.Dark else Mode.Light,
     onModeChanged: @Composable (mode: Mode) -> Unit = {},
     preset: ShadcnPreset? = null,
+    motionEnabled: Boolean? = null,
     content: @Composable () -> Unit
 ) {
     ShadcnTheme(preset = preset, mode = mode, onModeChanged = onModeChanged) {
         // Keep non-modal portals available, while allowing Unstyled modals to use
         // Compose's platform dialog layer for focus isolation and restoration.
-        PortalHost {
-            content()
-            DialogHost()
-            ToastHost()
+        ShadcnMotion(enabled = motionEnabled) {
+            PortalHost {
+                content()
+                DialogHost()
+                ToastHost()
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.toggle
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,6 +41,8 @@ import com.composeunstyled.focusRing
 import com.composeunstyled.theme.Theme
 import com.github.jershell.shadcn.components.icon.ShadcnIcon
 import com.github.jershell.shadcn.components.icon.toShadcnIcon
+import com.github.jershell.shadcn.motion.ShadcnMotionTokens
+import com.github.jershell.shadcn.motion.shadcnTween
 import com.github.jershell.shadcn.theme.DimProps
 import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.Effects
@@ -82,13 +85,20 @@ fun Toggle(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
-    val colors = resolveToggleColors(
+    val targetColors = resolveToggleColors(
         variant = variant,
         isOn = checked,
         isHovered = isHovered,
         isPressed = isPressed,
         isInvalid = isInvalid,
     )
+    val container by animateColorAsState(
+        targetColors.container, shadcnTween(ShadcnMotionTokens.Quick), label = "toggle background",
+    )
+    val foreground by animateColorAsState(
+        targetColors.content, shadcnTween(ShadcnMotionTokens.Quick), label = "toggle foreground",
+    )
+    val colors = targetColors.copy(container = container, content = foreground)
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
     val focusRingColor = resolveToggleFocusRingColor(isInvalid)
     val focusRingWidth = Effects.boxShadowFocusRing.spread

@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.tooltip
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -186,19 +187,21 @@ private val BasePaddingToken6 = 6.dp
 private val BasePaddingToken12 = 12.dp
 private val ArrowSize = 10.dp
 
+@Composable
 private fun tooltipEnter(side: AnchorSide): EnterTransition =
-    fadeIn(tween(150)) +
-        scaleIn(initialScale = 0.95f, animationSpec = tween(150)) +
+    fadeIn(tween(motionDurationMillis(150))) +
+        scaleIn(initialScale = 0.95f, animationSpec = tween(motionDurationMillis(150))) +
         when (side) {
-            AnchorSide.Top -> slideInVertically(tween(150)) { 8 } // slide-in-from-bottom-2
-            AnchorSide.Bottom -> slideInVertically(tween(150)) { -8 }
-            AnchorSide.Start -> slideInHorizontally(tween(150)) { 8 }
-            AnchorSide.End -> slideInHorizontally(tween(150)) { -8 }
+            AnchorSide.Top -> slideInVertically(tween(motionDurationMillis(150))) { 8 } // slide-in-from-bottom-2
+            AnchorSide.Bottom -> slideInVertically(tween(motionDurationMillis(150))) { -8 }
+            AnchorSide.Start -> slideInHorizontally(tween(motionDurationMillis(150))) { 8 }
+            AnchorSide.End -> slideInHorizontally(tween(motionDurationMillis(150))) { -8 }
         }
 
+@Composable
 private fun tooltipExit(side: AnchorSide): ExitTransition =
-    fadeOut(tween(100)) +
-        scaleOut(targetScale = 0.95f, animationSpec = tween(100))
+    fadeOut(tween(motionDurationMillis(100))) +
+        scaleOut(targetScale = 0.95f, animationSpec = tween(motionDurationMillis(100)))
 
 @Suppress("unused")
 private fun placementSide(placement: TooltipPlacement): AnchorSide = placement.side

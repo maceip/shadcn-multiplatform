@@ -17,6 +17,7 @@ build/
 .externalNativeBuild
 *.cxx
 /node_modules/
+**/node_modules/
 /tmp/
 .demoapp_session.json
 

@@ -30,6 +30,7 @@ import com.github.jershell.shadcn.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import com.github.jershell.shadcn.generated.resources.alt_spinner
 import com.github.jershell.shadcn.generated.resources.spinner_loading
+import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
 
 enum class SpinnerVariant {
     Default,
@@ -58,7 +59,7 @@ fun Spinner(
         SpinnerVariant.Default -> icon
         SpinnerVariant.Alt -> painterResource(Res.drawable.alt_spinner).toShadcnIcon()
     }
-    val rotation = rememberInfiniteTransition(label = "SpinnerRotation").animateFloat(
+    val rotation = if (LocalShadcnMotionEnabled.current) rememberInfiniteTransition(label = "SpinnerRotation").animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -66,14 +67,14 @@ fun Spinner(
             repeatMode = RepeatMode.Restart,
         ),
         label = "SpinnerAngle",
-    )
+    ).value else 0f
 
     ShadcnIconContent(
         icon = resolvedIcon,
         contentDescription = contentDescription,
         modifier = modifier
             .size(size)
-            .rotate(rotation.value)
+            .rotate(rotation)
             .semantics { this.contentDescription = contentDescription },
         tint = tint,
     )

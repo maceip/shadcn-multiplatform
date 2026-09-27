@@ -1,5 +1,7 @@
 package com.github.jershell.shadcn.components.select
 
+import com.github.jershell.shadcn.motion.shadcnMenuEnter
+import com.github.jershell.shadcn.motion.shadcnMenuExit
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -178,6 +180,8 @@ private fun DropdownMenuScope.SelectPanel(
     val shape = RoundedCornerShape(radius)
 
     DropdownMenuPanel(
+        enter = shadcnMenuEnter(),
+        exit = shadcnMenuExit(),
         modifier = modifier
             .width(240.dp)
             .clip(shape)

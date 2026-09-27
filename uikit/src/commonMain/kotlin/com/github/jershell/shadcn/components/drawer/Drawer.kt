@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.drawer
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -198,6 +199,7 @@ private fun BottomDrawer(
     val sheetState = rememberModalBottomSheetState(
         initialDetent = SheetDetent.Hidden,
         detents = listOf(SheetDetent.Hidden, SheetDetent.FullyExpanded),
+        animationSpec = com.github.jershell.shadcn.motion.shadcnTween(300),
     )
 
     LaunchedEffect(open) {
@@ -216,8 +218,8 @@ private fun BottomDrawer(
         overlay = {
             Scrim(
                 scrimColor = DrawerScrimColor, // bg-black/50
-                enter = fadeIn(tween(200)),
-                exit = fadeOut(tween(200)),
+                enter = fadeIn(tween(motionDurationMillis(200))),
+                exit = fadeOut(tween(motionDurationMillis(200))),
             )
         },
     ) {
@@ -290,14 +292,14 @@ private fun SideDrawer(
 ) {
     val alignToEnd = side == DrawerSide.Right
     val enter = if (alignToEnd) {
-        slideInHorizontally(tween(300)) { it } + fadeIn(tween(200))
+        slideInHorizontally(tween(motionDurationMillis(300))) { it } + fadeIn(tween(motionDurationMillis(200)))
     } else {
-        slideInHorizontally(tween(300)) { -it } + fadeIn(tween(200))
+        slideInHorizontally(tween(motionDurationMillis(300))) { -it } + fadeIn(tween(motionDurationMillis(200)))
     }
     val exit = if (alignToEnd) {
-        slideOutHorizontally(tween(300)) { it } + fadeOut(tween(200))
+        slideOutHorizontally(tween(motionDurationMillis(300))) { it } + fadeOut(tween(motionDurationMillis(200)))
     } else {
-        slideOutHorizontally(tween(300)) { -it } + fadeOut(tween(200))
+        slideOutHorizontally(tween(motionDurationMillis(300))) { -it } + fadeOut(tween(motionDurationMillis(200)))
     }
 
     UnstyledDialog(
@@ -307,8 +309,8 @@ private fun SideDrawer(
         overlay = {
             Scrim(
                 scrimColor = DrawerScrimColor, // bg-black/50
-                enter = fadeIn(tween(200)),
-                exit = fadeOut(tween(200)),
+                enter = fadeIn(tween(motionDurationMillis(200))),
+                exit = fadeOut(tween(motionDurationMillis(200))),
             )
         },
     ) {

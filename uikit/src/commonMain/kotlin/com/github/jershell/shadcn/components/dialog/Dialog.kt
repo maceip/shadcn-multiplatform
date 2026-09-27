@@ -1,6 +1,8 @@
 package com.github.jershell.shadcn.components.dialog
 
 import androidx.compose.animation.EnterTransition
+import com.github.jershell.shadcn.motion.motionDurationMillis
+import com.github.jershell.shadcn.motion.shadcnTween
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -121,8 +123,8 @@ fun Dialog(
         overlay = {
             Scrim(
                 scrimColor = DialogScrimColor, // bg-black/50
-                enter = fadeIn(tween(DialogAnimMillis)),
-                exit = fadeOut(tween(DialogAnimMillis)),
+                enter = fadeIn(shadcnTween(250)),
+                exit = fadeOut(shadcnTween(DialogAnimMillis)),
             )
         },
     ) {
@@ -132,8 +134,8 @@ fun Dialog(
                     .fillMaxSize()
                     .padding(BaseTokens.token32)
                     .wrapContentSize(Alignment.Center),
-                enter = DialogEnter,
-                exit = DialogExit,
+                enter = dialogEnter(),
+                exit = dialogExit(),
             ) {
                 DialogPanelBox(
                     modifier = modifier,
@@ -147,15 +149,15 @@ fun Dialog(
     }
 }
 
-internal const val DialogAnimMillis = 200
+internal const val DialogAnimMillis = 150
 
-internal val DialogEnter: EnterTransition =
-    fadeIn(tween(DialogAnimMillis)) +
-        scaleIn(initialScale = 0.95f, animationSpec = tween(DialogAnimMillis))
+@Composable
+internal fun dialogEnter(): EnterTransition =
+    fadeIn(shadcnTween()) + scaleIn(initialScale = 0.96f, animationSpec = shadcnTween())
 
-internal val DialogExit: ExitTransition =
-    fadeOut(tween(DialogAnimMillis)) +
-        scaleOut(targetScale = 0.95f, animationSpec = tween(DialogAnimMillis))
+@Composable
+internal fun dialogExit(): ExitTransition =
+    fadeOut(shadcnTween(DialogAnimMillis)) + scaleOut(targetScale = 0.96f, animationSpec = shadcnTween(DialogAnimMillis))
 
 /**
  * The styled dialog panel: centered on the screen, `max-w-lg`, `p-6 gap-4 rounded-lg`

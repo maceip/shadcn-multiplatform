@@ -1,4 +1,4 @@
-> This is the **maceip fork** of jershell/shadcn-multiplatform, with modal and interaction fixes. See [FORK.md](FORK.md) for details, tests, and adoption notes. The Maven coordinates below refer to upstream releases; these fork changes are currently available from source.
+> This is the **maceip fork** of jershell/shadcn-multiplatform, with modal/interaction fixes and native agent-chat components. See [FORK.md](FORK.md) for adoption notes and [the agent UI guide](docs/PROMPT_KIT.md) for the prompt-kit port. The Maven coordinates below refer to upstream releases; these fork changes are currently available from source.
 
 # shadcn-multiplatform
 
@@ -12,6 +12,9 @@ shadcn/ui components for Compose Multiplatform, built on top of [compose-unstyle
 ## Features
 
 - 50+ shadcn/ui components implemented for Compose Multiplatform (see [COMPONENTS.md](COMPONENTS.md) for the full plan and status)
+- All 21 prompt-kit component families, ten conversation/composer blocks, and two provider-neutral chat primitives; [source inventory and usage](docs/PROMPT_KIT.md)
+- Bundled xterm.js terminal for mobile, desktop and Wasm; applications supply their own PTY transport
+- Native metal-fx button, Soviet/Flume code palettes, offline Departure Mono, and reduced-motion-aware transitions
 - Built on unstyled compose-unstyled primitives — no Material components underneath
 - Theming generated from Figma design tokens (`imports/design-tokens.json`): light/dark palettes, semantic colors, dimensions, typography, shadows
 - Icon set with a generated catalog (`ShadcnIcon`)

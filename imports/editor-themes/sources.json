@@ -1,0 +1,12 @@
+{
+  "soviet": {
+    "url": "https://github.com/rezniqov/soviet.nvim",
+    "revision": "6dd84e174d0104f22adbdc62eb5fbd6c7684ad8d",
+    "license": "Apache-2.0"
+  },
+  "flume": {
+    "url": "https://github.com/mitander/flume.nvim",
+    "revision": "2ed1aa0c003063fccf1b3c680870589d78ca12d4",
+    "license": "MIT"
+  }
+}

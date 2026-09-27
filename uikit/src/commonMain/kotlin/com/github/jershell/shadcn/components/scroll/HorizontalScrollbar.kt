@@ -1,4 +1,5 @@
 package com.github.jershell.shadcn.components.scroll
+import com.github.jershell.shadcn.motion.shadcnTween
 
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -46,8 +47,8 @@ fun HorizontalScrollbar(
                 .background(thumbColor)
                 .padding(horizontal = 2.dp),
             thumbVisibility = ThumbVisibility.HideWhileIdle(
-                enter = fadeIn(),
-                exit = fadeOut(),
+                enter = fadeIn(shadcnTween(150)),
+                exit = fadeOut(shadcnTween(150)),
                 hideDelay = 800.milliseconds,
             ),
         )

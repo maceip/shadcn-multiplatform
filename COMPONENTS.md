@@ -91,3 +91,21 @@ _Currently empty._
 ## Fork interaction fixes
 
 See [FORK.md](FORK.md) for the changed modal contract, validation commands, and remaining platform checks. Dialogs and side drawers use platform modals; direct and queued dialogs share one implementation. Submenus support nested keyboard navigation and RTL, context menus support touch long-press, and resize handles expose keyboard/accessibility adjustment. These changes add behavioral tests without expanding the component catalog.
+
+## Agent interfaces and terminal
+
+The source choice, pinned revisions, implementation checklist and validation evidence are in [docs/UIREQ_IMPLEMENTATION.md](docs/UIREQ_IMPLEMENTATION.md). All new components have registered demos.
+
+| Addition | Scope and API |
+| --- | --- |
+| Prompt Kit input/chat | PromptInput compound editor, Message, ChatContainer, ScrollButton, PromptSuggestion, native FileUpload; all public compound parts retained. |
+| Prompt Kit rendering | CodeBlock with copy/highlighting, Markdown/GFM, native declarative JSXPreview, byte/base64 Image. JSX is a native subset with bindings/custom renderers, not a React runtime. |
+| Prompt Kit agent status | ResponseStream/TextStream, all twelve Loader variants, Reasoning, Tool, Source, Steps, SystemMessage, ChainOfThought, TextShimmer, ThinkingBar, FeedbackBar. |
+| Prompt Kit blocks | All ten source compositions, plus Chatbot and ToolCallingChatbot with an injected cancellable transport. History switching resets local draft/scroll state; retry preserves failed input. |
+| Terminal | Real offline xterm.js engine in Android WebView, iOS WKWebView, Wasm iframe and desktop JCEF; bounded output/acknowledgement, input/resize, mobile extra keys, explicit desktop initialization. Host supplies shell/PTY transport. |
+| MetalButton | Single metal-fx button port with source noise/plasma/palettes/glow mathematics, native Canvas perimeter sampling, paused/reduced-motion lifecycle, three presets. |
+| Text/code themes | Soviet Dark/Light and Flume Dusk/Opal/Mira/Mesa, including syntax roles and sixteen ANSI colors. |
+| Departure Mono | Offline font resource and opt-in typography provider, distributed with OFL license. |
+| Motion | Shared platform-aware reduced-motion provider; targeted appearance/resize/checkbox transitions plus existing motion integration. See [motion audit](docs/MOTION_AUDIT.md). |
+
+See [Prompt Kit contracts](docs/PROMPT_KIT.md), [terminal integration](docs/TERMINAL.md), [metal rendering differences](docs/METAL_BUTTON.md), and [theme source mappings](imports/editor-themes/README.md). `scripts/verify_prompt_port.py` verifies the 21-family / 59-export inventory and all block/primitives mappings; behavioral tests are separate.

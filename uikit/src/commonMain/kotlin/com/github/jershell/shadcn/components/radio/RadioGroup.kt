@@ -1,5 +1,11 @@
 package com.github.jershell.shadcn.components.radio
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +29,9 @@ import com.composeunstyled.SelectedIndicator
 import com.composeunstyled.UnstyledRadioGroup
 import com.composeunstyled.theme.Theme
 import com.github.jershell.shadcn.models.DataItem
+import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
+import com.github.jershell.shadcn.motion.ShadcnMotionTokens
+import com.github.jershell.shadcn.motion.shadcnTween
 import com.github.jershell.shadcn.theme.DimProps
 import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.TwDimensions
@@ -52,6 +61,14 @@ fun <T> RadioGroup(
     val radius = Theme[DimProps][DimTokens.radiusSm]
     val itemShape = RoundedCornerShape(radius)
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
+    val indicatorEnter = if (LocalShadcnMotionEnabled.current) {
+        fadeIn(shadcnTween(ShadcnMotionTokens.Quick)) +
+            scaleIn(shadcnTween(ShadcnMotionTokens.Quick), initialScale = 0.75f)
+    } else EnterTransition.None
+    val indicatorExit = if (LocalShadcnMotionEnabled.current) {
+        fadeOut(shadcnTween(ShadcnMotionTokens.Quick)) +
+            scaleOut(shadcnTween(ShadcnMotionTokens.Quick), targetScale = 0.75f)
+    } else ExitTransition.None
 
     UnstyledRadioGroup(
         value = selectedKey,
@@ -99,7 +116,7 @@ fun <T> RadioGroup(
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            SelectedIndicator {
+                            SelectedIndicator(enter = indicatorEnter, exit = indicatorExit) {
                                 Box(
                                     modifier = Modifier
                                         .size(TwDimensions.heightHToken2)

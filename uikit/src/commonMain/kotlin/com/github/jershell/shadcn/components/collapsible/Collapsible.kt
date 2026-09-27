@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.collapsible
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -135,8 +136,8 @@ internal class CollapsibleScopeImpl(
     ) {
         UnstyledDisclosedContent(
             modifier = modifier,
-            enter = fadeIn(tween(200)) + expandVertically(expandFrom = Alignment.Top, animationSpec = tween(200)),
-            exit = fadeOut(tween(200)) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(200)),
+            enter = fadeIn(tween(motionDurationMillis(200))) + expandVertically(expandFrom = Alignment.Top, animationSpec = tween(motionDurationMillis(200))),
+            exit = fadeOut(tween(motionDurationMillis(200))) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(motionDurationMillis(200))),
         ) {
             Column(
                 modifier = Modifier
@@ -218,7 +219,7 @@ object CollapsibleDefaults {
     ) {
         val rotation by animateFloatAsState(
             targetValue = if (expanded) 180f else 0f,
-            animationSpec = tween(200),
+            animationSpec = tween(motionDurationMillis(200)),
             label = "collapsibleChevronRotation",
         )
         val colors = resolveCollapsibleColors(isHovered = false)

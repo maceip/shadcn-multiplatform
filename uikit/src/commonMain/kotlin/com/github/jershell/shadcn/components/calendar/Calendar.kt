@@ -1,5 +1,7 @@
 package com.github.jershell.shadcn.components.calendar
 
+import com.github.jershell.shadcn.motion.shadcnMenuEnter
+import com.github.jershell.shadcn.motion.shadcnMenuExit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -208,6 +210,8 @@ private fun CalendarHeaderDropdown(
         },
         panel = {
             DropdownMenuPanel(
+                enter = shadcnMenuEnter(),
+                exit = shadcnMenuExit(),
                 modifier = Modifier
                     .width(120.dp)
                     .heightIn(max = 240.dp)

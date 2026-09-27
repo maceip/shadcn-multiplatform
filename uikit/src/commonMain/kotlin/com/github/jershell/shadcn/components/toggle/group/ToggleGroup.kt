@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.toggle.group
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,6 +39,8 @@ import com.github.jershell.shadcn.components.toggle.ToggleVariant
 import com.github.jershell.shadcn.components.toggle.resolveToggleColors
 import com.github.jershell.shadcn.components.toggle.resolveToggleFocusRingColor
 import com.github.jershell.shadcn.components.toggle.spec
+import com.github.jershell.shadcn.motion.ShadcnMotionTokens
+import com.github.jershell.shadcn.motion.shadcnTween
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
 import com.github.jershell.shadcn.theme.DimProps
@@ -274,13 +277,20 @@ private fun ToggleGroupItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
-    val colors = resolveToggleColors(
+    val targetColors = resolveToggleColors(
         variant = variant,
         isOn = checked,
         isHovered = isHovered,
         isPressed = isPressed,
         isInvalid = false,
     )
+    val container by animateColorAsState(
+        targetColors.container, shadcnTween(ShadcnMotionTokens.Quick), label = "toggle group background",
+    )
+    val foreground by animateColorAsState(
+        targetColors.content, shadcnTween(ShadcnMotionTokens.Quick), label = "toggle group foreground",
+    )
+    val colors = targetColors.copy(container = container, content = foreground)
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
     val focusRingColor = resolveToggleFocusRingColor(isInvalid = false)
     val focusRingWidth = Effects.boxShadowFocusRing.spread

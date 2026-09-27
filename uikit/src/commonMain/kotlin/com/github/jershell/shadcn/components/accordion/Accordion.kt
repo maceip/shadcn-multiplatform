@@ -1,6 +1,7 @@
 package com.github.jershell.shadcn.components.accordion
 
 import androidx.compose.animation.AnimatedVisibility
+import com.github.jershell.shadcn.motion.shadcnTween
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -193,6 +194,7 @@ fun DisclosureScope.AccordionTrigger(
     val enabled = itemInfo.enabled
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
+        animationSpec = shadcnTween(),
         label = "accordionChevronRotation",
     )
 
@@ -253,8 +255,8 @@ fun DisclosureScope.AccordionContent(
     AnimatedVisibility(
         visible = itemInfo.expanded,
         modifier = modifier.fillMaxWidth(),
-        enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-        exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+        enter = expandVertically(expandFrom = Alignment.Top, animationSpec = shadcnTween()) + fadeIn(shadcnTween()),
+        exit = shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = shadcnTween()) + fadeOut(shadcnTween()),
     ) {
         Box(
             modifier = Modifier.padding(

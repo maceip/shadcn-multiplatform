@@ -1,4 +1,6 @@
 package com.github.jershell.shadcn.components.popover
+import com.github.jershell.shadcn.motion.shadcnMenuAppearance
+import com.github.jershell.shadcn.motion.menuMotionOrigin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -94,7 +96,7 @@ fun Popover(
         },
         content = {
             CompositionLocalProvider(LocalPopoverScope provides PopoverScopeInstance) {
-                PopoverScopeInstance.content()
+                Box(Modifier.shadcnMenuAppearance(menuMotionOrigin(side))) { PopoverScopeInstance.content() }
             }
         },
         side = side,

@@ -1,0 +1,933 @@
+{
+  "repository": "https://github.com/ibelick/prompt-kit",
+  "commit": "de80375967400aa0c6ebab9d3ba4f9258ab79fcc",
+  "commit_date": "2026-03-12T18:00:30+01:00",
+  "license": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2025 Julien Thibeaut",
+    "path": "LICENCE.md",
+    "obligation": "Preserve copyright and MIT notice with copied/substantially derived code."
+  },
+  "scope": {
+    "public_component_families": 21,
+    "public_component_exports": 59,
+    "core_source_lines": 3099,
+    "composition_blocks": 10,
+    "provider_backed_primitives": 2,
+    "supporting_ui": "Reuse existing fork equivalents for components/ui; site/MDX/registry build are distribution infrastructure."
+  },
+  "quality": {
+    "test_files": 0,
+    "test_script": false,
+    "ci_workflows": false,
+    "assessment_method": "Source inspection only; web build and runtime tests not executed",
+    "generated_registry_matches_source": true
+  },
+  "components": [
+    {
+      "name": "prompt-input",
+      "source": "components/prompt-kit/prompt-input.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/prompt-input.tsx",
+      "public_exports": [
+        "PromptInput",
+        "PromptInputTextarea",
+        "PromptInputActions",
+        "PromptInputAction"
+      ],
+      "lines": 233,
+      "description": "An input field designed for chat interfaces, allowing users to enter and submit text prompts to an AI model",
+      "dependencies": [],
+      "registry_dependencies": [
+        "textarea",
+        "tooltip"
+      ],
+      "behavior": [
+        "Controlled/uncontrolled text, autosizing to maxHeight, Enter submit, Shift+Enter newline",
+        "Container click focuses input; action tooltip trigger stops container click; disabled input"
+      ],
+      "compose_mapping": [
+        "Textarea/TextFieldState",
+        "FocusRequester",
+        "IME/key handling",
+        "Tooltip",
+        "Row/Column"
+      ],
+      "acceptance": [
+        "Controlled updates preserve selection/composition",
+        "Enter once, Shift+Enter newline, IME composing Enter does not send",
+        "Loading/disabled/empty submission policy",
+        "Action focus and max height"
+      ],
+      "upstream_findings": [
+        "Enter unconditionally calls onSubmit without isComposing or loading guard",
+        "isLoading only stored in context, never consulted",
+        "Example custom onKeyDown calls submit a second time"
+      ]
+    },
+    {
+      "name": "code-block",
+      "source": "components/prompt-kit/code-block.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/code-block.tsx",
+      "public_exports": [
+        "CodeBlockGroup",
+        "CodeBlockCode",
+        "CodeBlock"
+      ],
+      "lines": 94,
+      "description": "A component for displaying code snippets with syntax highlighting and customizable styling",
+      "dependencies": [
+        "shiki"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "Selectable syntax-highlighted code with language/theme",
+        "Plain initial fallback, optional group/header/footer slots, horizontal scrolling"
+      ],
+      "compose_mapping": [
+        "SelectionContainer",
+        "BasicText(AnnotatedString)",
+        "Syntax highlighter adapter",
+        "horizontalScroll"
+      ],
+      "acceptance": [
+        "Whitespace/tabs preserved",
+        "Unsupported language fallback",
+        "Latest source/theme wins asynchronous highlighting",
+        "Long lines scroll"
+      ],
+      "upstream_findings": [
+        "codeToHtml async work has no catch or stale-result guard"
+      ]
+    },
+    {
+      "name": "markdown",
+      "source": "components/prompt-kit/markdown.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/markdown.tsx",
+      "public_exports": [
+        "Markdown"
+      ],
+      "lines": 110,
+      "description": "A component for rendering Markdown content with support for code blocks, GFM, and custom styling",
+      "dependencies": [
+        "react-markdown",
+        "remark-gfm",
+        "shiki",
+        "marked",
+        "remark-breaks"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "CommonMark plus GFM tables/task lists/autolinks/strikethrough",
+        "Soft breaks rendered as breaks; fenced vs inline code",
+        "Memoized blocks and custom renderers"
+      ],
+      "compose_mapping": [
+        "KMP Markdown AST parser/renderer",
+        "Typography/Table/Checkbox/InlineCode",
+        "CodeBlock",
+        "LinkAnnotation"
+      ],
+      "acceptance": [
+        "All GFM constructs",
+        "Incomplete streamed markdown stabilizes",
+        "Renderer/theme changes update unchanged blocks",
+        "Safe links and inert raw HTML"
+      ],
+      "upstream_findings": [
+        "Block comparator ignores components renderer changes",
+        "Parses twice using marked lexer then react-markdown"
+      ]
+    },
+    {
+      "name": "message",
+      "source": "components/prompt-kit/message.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/message.tsx",
+      "public_exports": [
+        "Message",
+        "MessageAvatar",
+        "MessageContent",
+        "MessageActions",
+        "MessageAction"
+      ],
+      "lines": 120,
+      "description": "A component for displaying chat messages with support for avatars, markdown content, and interactive actions",
+      "dependencies": [
+        "react-markdown",
+        "remark-gfm",
+        "shiki",
+        "marked",
+        "remark-breaks"
+      ],
+      "registry_dependencies": [
+        "avatar",
+        "tooltip"
+      ],
+      "behavior": [
+        "Composable row, avatar/body/action slots",
+        "Avatar required alt plus fallback and delay",
+        "Plain/markdown body and action tooltips"
+      ],
+      "compose_mapping": [
+        "Row/Column",
+        "Avatar",
+        "Markdown",
+        "Tooltip",
+        "Button"
+      ],
+      "acceptance": [
+        "Avatar fallback/description",
+        "Selectable text",
+        "Actions named and keyboard/touch operable",
+        "Long body wrapping"
+      ]
+    },
+    {
+      "name": "chat-container",
+      "source": "components/prompt-kit/chat-container.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/chat-container.tsx",
+      "public_exports": [
+        "ChatContainerRoot",
+        "ChatContainerContent",
+        "ChatContainerScrollAnchor"
+      ],
+      "lines": 67,
+      "description": "A component for creating chat interfaces with intelligent auto-scrolling behavior, designed to provide a smooth and responsive user experience",
+      "dependencies": [
+        "use-stick-to-bottom"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "Initial bottom and smooth following when content grows",
+        "Manual scroll away suspends follow until return",
+        "Log role and optional bottom anchor"
+      ],
+      "compose_mapping": [
+        "LazyColumn/LazyListState",
+        "ChatScrollState",
+        "snapshotFlow",
+        "liveRegion semantics"
+      ],
+      "acceptance": [
+        "Initial bottom, append and streaming growth follow",
+        "User scroll-up remains stable",
+        "Return button reattaches",
+        "Resize/IME inset and disposal"
+      ]
+    },
+    {
+      "name": "scroll-button",
+      "source": "components/prompt-kit/scroll-button.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/scroll-button.tsx",
+      "public_exports": [
+        "ScrollButton"
+      ],
+      "lines": 42,
+      "description": "A floating button component that appears when users scroll up in a container, allowing them to quickly return to the bottom of the content",
+      "dependencies": [
+        "class-variance-authority",
+        "lucide-react"
+      ],
+      "registry_dependencies": [
+        "button"
+      ],
+      "behavior": [
+        "Floating return-to-bottom button",
+        "Animated visibility according to chat isAtBottom",
+        "Variant and size"
+      ],
+      "compose_mapping": [
+        "Button",
+        "AnimatedVisibility",
+        "ChatScrollState"
+      ],
+      "acceptance": [
+        "Hidden button absent from focus/semantics",
+        "Click/Enter scroll and reattach",
+        "Accessible label"
+      ],
+      "upstream_findings": [
+        "Opacity-zero/pointer-events-none button remains tabbable",
+        "Default icon button lacks accessible label"
+      ]
+    },
+    {
+      "name": "loader",
+      "source": "components/prompt-kit/loader.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/loader.tsx",
+      "public_exports": [
+        "CircularLoader",
+        "ClassicLoader",
+        "PulseLoader",
+        "PulseDotLoader",
+        "DotsLoader",
+        "TypingLoader",
+        "WaveLoader",
+        "BarsLoader",
+        "TerminalLoader",
+        "TextBlinkLoader",
+        "TextShimmerLoader",
+        "TextDotsLoader",
+        "Loader"
+      ],
+      "lines": 499,
+      "description": "A component for displaying a loading indicator with multiple variants and customizable styling",
+      "dependencies": [],
+      "registry_dependencies": [
+        "button"
+      ],
+      "behavior": [
+        "12 variants: circular, classic, pulse, pulse-dot, dots, typing, wave, bars, terminal, text-blink, text-shimmer, loading-dots",
+        "Three sizes sm/md/lg",
+        "Custom text; nontext variants Loading alternative"
+      ],
+      "compose_mapping": [
+        "Canvas",
+        "rememberInfiniteTransition",
+        "BasicText",
+        "Indeterminate progress semantics"
+      ],
+      "acceptance": [
+        "All 12 variants and sizes",
+        "One status semantic",
+        "Reduced motion stable visible state",
+        "Animations dispose"
+      ],
+      "upstream_findings": [
+        "No reduced-motion treatment in component source"
+      ]
+    },
+    {
+      "name": "prompt-suggestion",
+      "source": "components/prompt-kit/prompt-suggestion.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/prompt-suggestion.tsx",
+      "public_exports": [
+        "PromptSuggestion"
+      ],
+      "lines": 117,
+      "description": "A component for implementing interactive prompt suggestions in AI interfaces. The PromptSuggestion component offers two distinct modes: Normal Mode and Highlight Mode.",
+      "dependencies": [
+        "class-variance-authority",
+        "lucide-react"
+      ],
+      "registry_dependencies": [
+        "button"
+      ],
+      "behavior": [
+        "Normal pill or first case-insensitive substring highlighted mode",
+        "Preserves source case and whitespace; blank highlight normal mode",
+        "Button variants and sizes"
+      ],
+      "compose_mapping": [
+        "Button",
+        "AnnotatedString"
+      ],
+      "acceptance": [
+        "Case preservation, blank/missing/no-match highlight",
+        "Keyboard/touch/disabled",
+        "Long text wraps"
+      ]
+    },
+    {
+      "name": "response-stream",
+      "source": "components/prompt-kit/response-stream.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/response-stream.tsx",
+      "public_exports": [
+        "useTextStream",
+        "ResponseStream"
+      ],
+      "lines": 394,
+      "description": "A component to simulate streaming text on the client side, perfect for fake responses, or any controlled progressive text display.",
+      "dependencies": [],
+      "registry_dependencies": [],
+      "behavior": [
+        "String or AsyncIterable chunks",
+        "Typewriter/fade; speed/chunk/delay/duration overrides",
+        "Displayed text/segments/completion state; start/reset/pause/resume controls; errors"
+      ],
+      "compose_mapping": [
+        "Stable state holder + Flow",
+        "Cancellation-safe coroutines",
+        "AnnotatedString segments + animations"
+      ],
+      "acceptance": [
+        "Exactly-once completion, including empty/fade",
+        "Reset/replacement/disposal cancel stale streams",
+        "Pause/resume for string and async",
+        "Errors, Unicode graphemes, speed limits, latest callbacks"
+      ],
+      "upstream_findings": [
+        "Fade invokes onComplete from hook and final animation handler",
+        "Reset/start do not abort previous async iterator",
+        "Pause only stops requestAnimationFrame, not async source",
+        "String slicing may split surrogate pairs"
+      ]
+    },
+    {
+      "name": "reasoning",
+      "source": "components/prompt-kit/reasoning.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/reasoning.tsx",
+      "public_exports": [
+        "Reasoning",
+        "ReasoningTrigger",
+        "ReasoningContent"
+      ],
+      "lines": 182,
+      "description": "A collapsible component for showing AI reasoning, explanations, or logic. You can control it manually or let it auto-close when the stream ends. Markdown is supported.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "Controlled/uncontrolled expansion",
+        "Uncontrolled stream start opens and stream end closes",
+        "Chevron, animated height, optional markdown"
+      ],
+      "compose_mapping": [
+        "Collapsible",
+        "Markdown",
+        "remember state/LaunchedEffect"
+      ],
+      "acceptance": [
+        "Controlled state not overwritten",
+        "Stream lifecycle and manual override policy",
+        "Collapsed content not focusable/announced",
+        "Growing content not clipped"
+      ],
+      "upstream_findings": [
+        "Plain trigger lacks aria-expanded/controls",
+        "Collapsed maxHeight=0 subtree stays in DOM without inert/aria-hidden"
+      ]
+    },
+    {
+      "name": "file-upload",
+      "source": "components/prompt-kit/file-upload.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/file-upload.tsx",
+      "public_exports": [
+        "FileUpload",
+        "FileUploadTrigger",
+        "FileUploadContent"
+      ],
+      "lines": 193,
+      "description": "A component for creating drag-and-drop file upload interfaces with support for single or multiple files, custom triggers, and visual feedback during file dragging operations.",
+      "dependencies": [],
+      "registry_dependencies": [],
+      "behavior": [
+        "Picker trigger, MIME/extensions accept, multiple/single",
+        "Drag/drop active overlay",
+        "Disabled, file callback, repeat same selection"
+      ],
+      "compose_mapping": [
+        "Platform picker adapter",
+        "Scoped DragAndDropTarget adapters",
+        "FileUploadState",
+        "Overlay"
+      ],
+      "acceptance": [
+        "Picker/drop share accept/multiple/disabled validation",
+        "Same file repeated selection",
+        "Cancellation/drag nesting cleanup",
+        "No global unrelated drop interception"
+      ],
+      "upstream_findings": [
+        "Global drop listeners ignore disabled when delivering files",
+        "accept applies to input but not dropped files",
+        "All instances attach window listeners"
+      ]
+    },
+    {
+      "name": "jsx-preview",
+      "source": "components/prompt-kit/jsx-preview.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/jsx-preview.tsx",
+      "public_exports": [
+        "JSXPreview"
+      ],
+      "lines": 81,
+      "description": "A component for rendering JSX strings as React components, with support for streaming content and automatic tag completion.",
+      "dependencies": [
+        "react-jsx-parser"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "JSX string rendered by react-jsx-parser with component bindings/props",
+        "Streaming automatically completes tags"
+      ],
+      "compose_mapping": [
+        "Actual isolated web JSX preview host OR explicitly documented native declarative format adapter",
+        "Loading/error shell"
+      ],
+      "acceptance": [
+        "Real interactive JSX rendering if claiming equivalence",
+        "Incomplete/nested/quoted markup preserves text",
+        "Isolation from privileged native APIs",
+        "Lifecycle/disposal and error presentation"
+      ],
+      "upstream_findings": [
+        "Regex completion drops text after last matched tag and pops stack without matching names",
+        "No direct commonMain Compose equivalent; displaying source alone is not a faithful port"
+      ]
+    },
+    {
+      "name": "tool",
+      "source": "components/prompt-kit/tool.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/tool.tsx",
+      "public_exports": [
+        "Tool"
+      ],
+      "lines": 215,
+      "description": "Displays tool call details including input, output, status, and errors. Ideal for visualizing AI tool usage in chat UIs.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registry_dependencies": [
+        "collapsible",
+        "button"
+      ],
+      "behavior": [
+        "Collapsible type/call ID/input/output record",
+        "input-streaming, input-available, output-available, output-error",
+        "State icon/badge, formatted data, errors, bounded output"
+      ],
+      "compose_mapping": [
+        "Collapsible",
+        "Badge",
+        "CodeBlock/SelectionContainer",
+        "ToolPart data class and enum"
+      ],
+      "acceptance": [
+        "All four states retain expansion through changes",
+        "Nested/null/primitive formatting",
+        "Long output scroll and error/status semantics",
+        "Presentation never executes tools"
+      ]
+    },
+    {
+      "name": "source",
+      "source": "components/prompt-kit/source.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/source.tsx",
+      "public_exports": [
+        "Source",
+        "SourceTrigger",
+        "SourceContent"
+      ],
+      "lines": 129,
+      "description": "Displays website sources used by AI-generated content, showing URL details, titles, and descriptions on hover.",
+      "dependencies": [],
+      "registry_dependencies": [
+        "hover-card"
+      ],
+      "behavior": [
+        "Citation pill with domain/number/custom label",
+        "Hover/focus preview title/description/domain",
+        "Link and optional trigger favicon; preview always favicon",
+        "Domain parsing fallback"
+      ],
+      "compose_mapping": [
+        "HoverCard/Popover",
+        "Link action",
+        "URI parser",
+        "Caller supplied image"
+      ],
+      "acceptance": [
+        "Mouse/focus/touch preview access",
+        "Exact URL callback and safe schemes",
+        "Invalid/relative URL fallback",
+        "Optional favicon loading"
+      ],
+      "upstream_findings": [
+        "Google favicon service receives full source href; mandatory in preview"
+      ]
+    },
+    {
+      "name": "image",
+      "source": "components/prompt-kit/image.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/image.tsx",
+      "public_exports": [
+        "Image"
+      ],
+      "lines": 76,
+      "description": "A component for displaying images from base64 or Uint8Array data, with full accessibility and responsive styling. Perfect for AI-generated or user-uploaded images.",
+      "dependencies": [],
+      "registry_dependencies": [],
+      "behavior": [
+        "Base64 or byte array plus MIME; base64 preferred",
+        "Required alt; responsive rounded image; missing-data placeholder",
+        "Browser object URL cleanup"
+      ],
+      "compose_mapping": [
+        "ImageBitmap decode adapter",
+        "Image/contentScale",
+        "Skeleton"
+      ],
+      "acceptance": [
+        "Bytes/base64 equivalence and updates",
+        "Corrupt/missing data fallback",
+        "Bounded size and resource cleanup"
+      ]
+    },
+    {
+      "name": "steps",
+      "source": "components/prompt-kit/steps.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/steps.tsx",
+      "public_exports": [
+        "StepsItem",
+        "StepsTrigger",
+        "StepsContent",
+        "StepsBar",
+        "Steps"
+      ],
+      "lines": 116,
+      "description": "A component for displaying a sequence of operations in a collapsible layout. Each step can include details and an optional vertical bar. Useful for showing AI steps like reasoning traces, tool calls, or process logs.",
+      "dependencies": [],
+      "registry_dependencies": [
+        "collapsible"
+      ],
+      "behavior": [
+        "Collapsible operation list default open",
+        "Icon hover swap to chevron",
+        "Animated details items and replaceable vertical bar"
+      ],
+      "compose_mapping": [
+        "Collapsible",
+        "Row/Column",
+        "AnimatedContent",
+        "Divider/Canvas"
+      ],
+      "acceptance": [
+        "Default and controlled expansion",
+        "Keyboard/touch and collapsed semantics",
+        "Custom bar/icon, long content"
+      ]
+    },
+    {
+      "name": "system-message",
+      "source": "components/prompt-kit/system-message.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/system-message.tsx",
+      "public_exports": [
+        "SystemMessage"
+      ],
+      "lines": 133,
+      "description": "A banner-style component for surfacing contextual information, warnings, or instructions within AI interfaces.",
+      "dependencies": [],
+      "registry_dependencies": [
+        "button"
+      ],
+      "behavior": [
+        "Action/error/warning, filled/outline",
+        "Default/custom/hidden icon",
+        "CTA label/callback/style"
+      ],
+      "compose_mapping": [
+        "Alert/Card",
+        "Button",
+        "Status/liveRegion semantics"
+      ],
+      "acceptance": [
+        "Three variants x two fill styles",
+        "Custom/hidden icon and wrapping",
+        "CTA callback/style",
+        "Status recognizable without color"
+      ],
+      "upstream_findings": [
+        "cta.variant declared but ignored: always default button"
+      ]
+    },
+    {
+      "name": "chain-of-thought",
+      "source": "components/prompt-kit/chain-of-thought.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/chain-of-thought.tsx",
+      "public_exports": [
+        "ChainOfThoughtItem",
+        "ChainOfThoughtTrigger",
+        "ChainOfThoughtContent",
+        "ChainOfThought",
+        "ChainOfThoughtStep"
+      ],
+      "lines": 148,
+      "description": "A component for displaying a chain of thought process with collapsible steps and triggers.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registry_dependencies": [
+        "collapsible"
+      ],
+      "behavior": [
+        "Individually collapsible step sequence",
+        "Trigger icon/hover swap and body slots",
+        "Connector stops at final step",
+        "Controlled/default Collapsible props"
+      ],
+      "compose_mapping": [
+        "Collapsible",
+        "Column",
+        "Canvas/Divider",
+        "Stable keyed items"
+      ],
+      "acceptance": [
+        "Independent step expansion",
+        "Stable state after insert/reorder",
+        "Last connector updates",
+        "Keyboard/touch and hidden content"
+      ]
+    },
+    {
+      "name": "text-shimmer",
+      "source": "components/prompt-kit/text-shimmer.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/text-shimmer.tsx",
+      "public_exports": [
+        "TextShimmer"
+      ],
+      "lines": 39,
+      "description": "A component for displaying a shimmer effect on text, perfect for loading states or highlighting text.",
+      "dependencies": [],
+      "registry_dependencies": [],
+      "behavior": [
+        "Animated text gradient; custom duration; spread clamped 5..45",
+        "Typography customization"
+      ],
+      "compose_mapping": [
+        "BasicText gradient Brush",
+        "rememberInfiniteTransition"
+      ],
+      "acceptance": [
+        "Duration/spread bounds",
+        "Text retained once in semantics",
+        "Reduced motion and theme contrast"
+      ],
+      "upstream_findings": [
+        "No reduced-motion treatment"
+      ]
+    },
+    {
+      "name": "thinking-bar",
+      "source": "components/prompt-kit/thinking-bar.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/thinking-bar.tsx",
+      "public_exports": [
+        "ThinkingBar"
+      ],
+      "lines": 47,
+      "description": "A component to display the thinking state of an AI model with optional actions.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registry_dependencies": [
+        "text-shimmer"
+      ],
+      "behavior": [
+        "Shimmer label optionally clickable for details",
+        "Optional stop/answer-now callback and custom label"
+      ],
+      "compose_mapping": [
+        "Row",
+        "Button",
+        "TextShimmer"
+      ],
+      "acceptance": [
+        "Optional actions removed when absent",
+        "Details/stop exactly-once callbacks via keyboard/touch",
+        "No repeated shimmer announcements"
+      ]
+    },
+    {
+      "name": "feedback-bar",
+      "source": "components/prompt-kit/feedback-bar.tsx",
+      "source_url": "https://github.com/ibelick/prompt-kit/blob/de80375967400aa0c6ebab9d3ba4f9258ab79fcc/components/prompt-kit/feedback-bar.tsx",
+      "public_exports": [
+        "FeedbackBar"
+      ],
+      "lines": 64,
+      "description": "A component to collect user feedback on AI responses.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registry_dependencies": [],
+      "behavior": [
+        "Title/icon",
+        "Helpful, not-helpful and close named callbacks"
+      ],
+      "compose_mapping": [
+        "Row",
+        "Button",
+        "Separator"
+      ],
+      "acceptance": [
+        "Three accessible keyboard/touch actions",
+        "Latest callbacks",
+        "Narrow screen layout",
+        "Selected feedback is optional extension, not upstream built-in"
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "name": "conversation-actions",
+      "source": "components/blocks/conversation-actions.tsx",
+      "public_exports": [
+        "ConversationWithActions"
+      ],
+      "behavior": "Static conversation with copy/upvote/downvote buttons. Buttons are illustrative, not wired to clipboard or backend.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "conversation-avatars",
+      "source": "components/blocks/conversation-avatars.tsx",
+      "public_exports": [
+        "ConversationWithAvatars"
+      ],
+      "behavior": "Static conversation with assistant/user avatars and markdown body.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "conversation-prompt-input",
+      "source": "components/blocks/conversation-prompt-input.tsx",
+      "public_exports": [
+        "ConversationPromptInput"
+      ],
+      "behavior": "Conversation plus composer; appends user message and canned response after timeout. No provider.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "conversation-scroll-bottom",
+      "source": "components/blocks/conversation-scroll-bottom.tsx",
+      "public_exports": [
+        "ConversationWithScrollBottom"
+      ],
+      "behavior": "Conversation plus ScrollButton and auto-following.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "full-chat-app",
+      "source": "components/blocks/full-chat-app.tsx",
+      "public_exports": [
+        "FullChatApp"
+      ],
+      "behavior": "Responsive sidebar/history and conversation/composer; sample data and timed canned response. Several toolbars have unwired actions.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "full-conversation",
+      "source": "components/blocks/full-conversation.tsx",
+      "public_exports": [
+        "FullConversation"
+      ],
+      "behavior": "Static full conversation layout with assistant/user styling.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "prompt-autocomplete-highlight",
+      "source": "components/blocks/prompt-autocomplete-highlight.tsx",
+      "public_exports": [
+        "PromptAutocompleteHighlight"
+      ],
+      "behavior": "Case-insensitive fixed-list suggestions and match highlighting. Suggestions lack onClick; submit logs to console.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "prompt-input-actions",
+      "source": "components/blocks/prompt-input-actions.tsx",
+      "public_exports": [
+        "PromptInputWithActions"
+      ],
+      "behavior": "Composer with attach/search/more/voice/send buttons; timed fake loading; auxiliary buttons unwired.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "prompt-input-suggestions",
+      "source": "components/blocks/prompt-input-suggestions.tsx",
+      "public_exports": [
+        "PromptInputWithSuggestions"
+      ],
+      "behavior": "Suggestion categories/items set composer input; submission clears text/category and logs to console.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    },
+    {
+      "name": "sidebar-chat-history",
+      "source": "components/blocks/sidebar-chat-history.tsx",
+      "public_exports": [
+        "SidebarChatHistory"
+      ],
+      "behavior": "Responsive grouped history sidebar with dropdown actions; sample data, no persistence.",
+      "compose_mapping": "Reusable composition/demo; hoist data and provide callbacks for all visible actions."
+    }
+  ],
+  "primitives": [
+    {
+      "name": "chatbot",
+      "dependencies": [
+        "ai",
+        "@ai-sdk/openai",
+        "zod",
+        "@ai-sdk/react",
+        "use-stick-to-bottom",
+        "react-markdown",
+        "remark-gfm",
+        "shiki",
+        "marked",
+        "remark-breaks"
+      ],
+      "env_vars": [
+        "OPENAI_API_KEY"
+      ],
+      "public_exports": [
+        "MessageComponent",
+        "ConversationPromptInput"
+      ],
+      "source_files": [
+        "components/primitives/chatbot.tsx",
+        "app/api/primitives/chatbot/route.ts",
+        "components/prompt-kit/chat-container.tsx",
+        "components/prompt-kit/loader.tsx",
+        "components/prompt-kit/message.tsx",
+        "components/prompt-kit/prompt-input.tsx",
+        "components/prompt-kit/markdown.tsx",
+        "components/prompt-kit/code-block.tsx"
+      ],
+      "behavior": "AI SDK useChat + DefaultChatTransport to local Next API. Server calls OpenAI gpt-4.1-nano with sample date/time tools. Tool-calling adds up-to-five-step loop and Tool presentation.",
+      "compose_mapping": "Provider-neutral ChatSession state/events and injectable transport; host supplies backend. No secret in native UI or mandatory OpenAI.",
+      "acceptance": [
+        "Send/stream/stop/error/retry transitions",
+        "Stable ordered text and tool parts",
+        "Fake-transport integration tests"
+      ]
+    },
+    {
+      "name": "tool-calling",
+      "dependencies": [
+        "ai",
+        "@ai-sdk/openai",
+        "zod",
+        "@ai-sdk/react",
+        "use-stick-to-bottom",
+        "react-markdown",
+        "remark-gfm",
+        "shiki",
+        "marked",
+        "remark-breaks"
+      ],
+      "env_vars": [
+        "OPENAI_API_KEY"
+      ],
+      "public_exports": [
+        "MessageComponent",
+        "ToolCallingChatbot"
+      ],
+      "source_files": [
+        "components/primitives/tool-calling.tsx",
+        "app/api/primitives/tool-calling/route.ts",
+        "components/prompt-kit/chat-container.tsx",
+        "components/prompt-kit/loader.tsx",
+        "components/prompt-kit/message.tsx",
+        "components/prompt-kit/prompt-input.tsx",
+        "components/prompt-kit/markdown.tsx",
+        "components/prompt-kit/code-block.tsx",
+        "components/prompt-kit/tool.tsx"
+      ],
+      "behavior": "AI SDK useChat + DefaultChatTransport to local Next API. Server calls OpenAI gpt-4.1-nano with sample date/time tools. Tool-calling adds up-to-five-step loop and Tool presentation.",
+      "compose_mapping": "Provider-neutral ChatSession state/events and injectable transport; host supplies backend. No secret in native UI or mandatory OpenAI.",
+      "acceptance": [
+        "Send/stream/stop/error/retry transitions",
+        "Stable ordered text and tool parts",
+        "Fake-transport integration tests"
+      ]
+    }
+  ]
+}

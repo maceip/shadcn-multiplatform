@@ -5,6 +5,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
 
 /**
  * Alignment of the snapped item inside the carousel viewport.
@@ -53,6 +54,7 @@ class CarouselState internal constructor(
     val opts: CarouselOpts,
     val orientation: CarouselOrientation,
 ) {
+    internal var motionEnabled: Boolean = true
     /** Index of the currently settled item. */
     val currentItem: Int
         get() = pagerState.currentPage
@@ -72,7 +74,7 @@ class CarouselState internal constructor(
         val count = pagerState.pageCount
         if (count <= 0) return
         val target = if (opts.loop) index.mod(count) else index.coerceIn(0, count - 1)
-        pagerState.animateScrollToPage(target)
+        if (motionEnabled) pagerState.animateScrollToPage(target) else pagerState.scrollToPage(target)
     }
 
     /** Scroll to the previous slide (or [CarouselOpts.slidesToScroll] slides). */
@@ -108,7 +110,7 @@ fun rememberCarouselState(
     )
     return remember(opts, orientation, pagerState) {
         CarouselState(pagerState, opts, orientation)
-    }
+    }.also { it.motionEnabled = LocalShadcnMotionEnabled.current }
 }
 
 internal fun CarouselState.snapPosition(): androidx.compose.foundation.gestures.snapping.SnapPosition =

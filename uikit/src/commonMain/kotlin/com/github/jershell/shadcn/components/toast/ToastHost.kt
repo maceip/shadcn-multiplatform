@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.toast
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -165,7 +166,7 @@ private fun StackedToastViewport(
     }
     val viewportHeight by animateDpAsState(
         targetValue = if (expanded) totalExpanded else frontHeight,
-        animationSpec = tween(STACK_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(STACK_ANIM_MILLIS), easing = ToastEasing),
         label = "toastViewportHeight",
     )
 
@@ -304,17 +305,18 @@ private fun ToastItem(
     LaunchedEffect(Unit) { entered = true }
     val enterProgress by animateFloatAsState(
         targetValue = if (entered) 1f else 0f,
-        animationSpec = tween(EXIT_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(EXIT_ANIM_MILLIS), easing = ToastEasing),
         label = "toastEnter",
     )
     val exitProgress by animateFloatAsState(
         targetValue = if (entry.exiting) 1f else 0f,
-        animationSpec = tween(EXIT_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(EXIT_ANIM_MILLIS), easing = ToastEasing),
         label = "toastExit",
     )
-    LaunchedEffect(entry.exiting) {
+    val exitMillis = motionDurationMillis(EXIT_ANIM_MILLIS)
+    LaunchedEffect(entry.exiting, exitMillis) {
         if (entry.exiting) {
-            delay(EXIT_ANIM_MILLIS + 50L)
+            delay(exitMillis.toLong())
             manager.finalizeRemove(entry.id)
         }
     }
@@ -323,22 +325,22 @@ private fun ToastItem(
     val heightTarget = clampedHeight ?: ownHeight
     val animatedHeight by animateDpAsState(
         targetValue = heightTarget ?: 0.dp,
-        animationSpec = tween(STACK_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(STACK_ANIM_MILLIS), easing = ToastEasing),
         label = "toastHeight",
     )
     val animatedOffsetY by animateDpAsState(
         targetValue = offsetY,
-        animationSpec = tween(STACK_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(STACK_ANIM_MILLIS), easing = ToastEasing),
         label = "toastOffsetY",
     )
     val animatedScale by animateFloatAsState(
         targetValue = scale,
-        animationSpec = tween(STACK_ANIM_MILLIS, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(STACK_ANIM_MILLIS), easing = ToastEasing),
         label = "toastScale",
     )
     val behindAlpha by animateFloatAsState(
         targetValue = if (behind) 0f else 1f,
-        animationSpec = tween(250, easing = ToastEasing),
+        animationSpec = tween(motionDurationMillis(250), easing = ToastEasing),
         label = "toastBehind",
     )
 

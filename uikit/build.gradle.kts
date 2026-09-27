@@ -106,6 +106,11 @@ kotlin {
             api(libs.icons.lucide.cmp)
 
             implementation(libs.lazytable)
+            api(libs.markdown.renderer)
+            implementation(libs.markdown.coil3)
+            implementation(libs.highlights)
+            api(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
         }
 
         commonTest.dependencies {
@@ -123,6 +128,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
+            implementation(libs.jcef.maven)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)

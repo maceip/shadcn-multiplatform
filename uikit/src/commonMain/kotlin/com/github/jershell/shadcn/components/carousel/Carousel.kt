@@ -200,7 +200,7 @@ private fun Modifier.carouselMouseDrag(
                 val nearest = (pager.currentPage + pager.currentPageOffsetFraction)
                     .roundToInt()
                     .coerceIn(0, pager.pageCount - 1)
-                scope.launch { pager.animateScrollToPage(nearest) }
+                scope.launch { state.scrollToItem(nearest) }
             }
         }
     }

@@ -1,6 +1,8 @@
 package com.github.jershell.shadcn.components.switch
 
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.snap
+import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -87,7 +89,7 @@ fun Switch(
             modifier = Modifier
                 .height(SwitchHeight)
                 .width(ThumbSize + ThumbPaddingHorizontal * 2),
-            animationSpec = spring(stiffness = 500f, dampingRatio = 0.75f),
+            animationSpec = if (LocalShadcnMotionEnabled.current) spring(stiffness = 500f, dampingRatio = 0.75f) else snap(),
         ) {
             Box(
                 modifier = Modifier

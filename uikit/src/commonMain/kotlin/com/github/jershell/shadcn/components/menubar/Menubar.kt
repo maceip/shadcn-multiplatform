@@ -1,4 +1,5 @@
 package com.github.jershell.shadcn.components.menubar
+import com.github.jershell.shadcn.motion.shadcnMenuAppearance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -313,6 +314,7 @@ private fun MenubarPanel(
                 )
             }
             .menuPanelStyle(minWidth = BaseTokens.token192) // min-w-[12rem]
+            .shadcnMenuAppearance()
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->

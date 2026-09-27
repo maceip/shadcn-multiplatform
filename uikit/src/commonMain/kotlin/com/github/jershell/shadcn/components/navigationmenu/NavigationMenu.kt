@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.navigationmenu
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -300,7 +301,7 @@ private fun NavigationMenuTriggerButton(
     val shape = RoundedCornerShape(Theme[DimProps][DimTokens.radiusMd])
     val chevronRotation by animateFloatAsState(
         targetValue = if (isOpen) 180f else 0f,
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = tween(durationMillis = motionDurationMillis(300)),
     )
 
     UnstyledButton(

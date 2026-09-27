@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.slider
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -412,7 +413,7 @@ private fun SliderThumb(
 ) {
     val ringColor by animateColorAsState(
         targetValue = if (ringVisible) colors.focusRing else Color.Transparent,
-        animationSpec = tween(150),
+        animationSpec = tween(motionDurationMillis(150)),
         label = "sliderThumbRing",
     )
 

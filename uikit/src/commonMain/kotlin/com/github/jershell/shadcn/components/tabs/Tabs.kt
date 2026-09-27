@@ -48,6 +48,7 @@ import com.github.jershell.shadcn.theme.DimProps
 import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.TwDimensions
 import com.github.jershell.shadcn.theme.TypographyStyles
+import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
 
 private data class TabLayout(
     val position: Offset,
@@ -100,10 +101,11 @@ fun <T> Tabs(
     val positionSpring = remember { spring<Offset>(stiffness = 500f, dampingRatio = 0.75f) }
     val sizeSpring = remember { spring<IntSize>(stiffness = 500f, dampingRatio = 0.75f) }
     var isInitial by remember { mutableStateOf(true) }
+    val motionEnabled = LocalShadcnMotionEnabled.current
 
-    LaunchedEffect(selectedKey, selectedLayout) {
+    LaunchedEffect(selectedKey, selectedLayout, motionEnabled) {
         val target = selectedLayout ?: return@LaunchedEffect
-        if (isInitial) {
+        if (isInitial || !motionEnabled) {
             highlightPosition.snapTo(target.position)
             highlightSize.snapTo(target.size)
             isInitial = false

@@ -9,8 +9,8 @@ import androidx.compose.ui.text.font.FontFamily
  * page), resolved by the host app. `null` means the generated theme default
  * (`FontFamily.Default`).
  *
- * The uikit stays asset-free: the app builds a [FontFamily] from its bundled
- * fonts and provides it via [LocalShadcnFonts]; the generated
+ * The app can build a [FontFamily] from its own bundled fonts and provide it
+ * here, or use the SDK's offline [ProvideDepartureMonoFont]. The generated
  * `TypographyStyles` read it live at composition time, so every text style
  * follows the picked font.
  */

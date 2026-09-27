@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.components.progress
 
+import com.github.jershell.shadcn.motion.motionDurationMillis
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -38,7 +39,7 @@ fun Progress(
     val animatedValue = if (animate) {
         animateFloatAsState(
             targetValue = clamped,
-            animationSpec = tween(durationMillis = 250),
+            animationSpec = tween(durationMillis = motionDurationMillis(250)),
             label = "ProgressValue",
         ).value
     } else {

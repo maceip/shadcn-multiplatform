@@ -90,7 +90,7 @@ fun Sidebar(
         SidebarCollapsible.Offcanvas -> if (currentExpanded) SidebarDefaults.Width else 0.dp
         SidebarCollapsible.None -> SidebarDefaults.Width
     }
-    val animatedWidth by animateDpAsState(targetWidth)
+    val animatedWidth by animateDpAsState(targetWidth, com.github.jershell.shadcn.motion.shadcnTween(300))
 
     val sidebarColor = Theme[ColorProps][ColorTokens.sidebar]
     val sidebarBorder = Theme[ColorProps][ColorTokens.sidebarBorder]

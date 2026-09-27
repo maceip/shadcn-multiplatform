@@ -1,5 +1,7 @@
 package com.github.jershell.shadcn.components.button
 
+import androidx.compose.animation.animateColorAsState
+import com.github.jershell.shadcn.motion.shadcnTween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -83,11 +85,14 @@ fun Button(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = resolveButtonColors(
+    val targetColors = resolveButtonColors(
         variant = variant,
         isHovered = isHovered,
         isPressed = isPressed,
     )
+    val container by animateColorAsState(targetColors.container, shadcnTween(150), label = "button background")
+    val foreground by animateColorAsState(targetColors.content, shadcnTween(150), label = "button foreground")
+    val colors = targetColors.copy(container = container, content = foreground)
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
     val focusRingColor = resolveButtonFocusRingColor(variant, isInvalid)
     val focusRingWidth = Effects.boxShadowFocusRing.spread

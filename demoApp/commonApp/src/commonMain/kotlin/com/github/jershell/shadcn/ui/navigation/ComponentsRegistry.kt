@@ -156,6 +156,12 @@ import com.github.jershell.shadcn.demoapp.generated.resources.components_registr
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_tooltip
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_typography
 import kotlin.jvm.JvmInline
+import com.github.jershell.shadcn.ui.components.demo.DemoPromptChat
+import com.github.jershell.shadcn.ui.components.demo.DemoPromptRendering
+import com.github.jershell.shadcn.ui.components.demo.DemoPromptStatus
+import com.github.jershell.shadcn.ui.components.demo.DemoTerminal
+import com.github.jershell.shadcn.ui.components.demo.DemoMetalButton
+import com.github.jershell.shadcn.ui.components.demo.DemoEditorThemes
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
@@ -166,6 +172,12 @@ data object ComponentsRegistry {
 
     @Composable
     fun all(): Map<ComponentId, ComponentEntry> = mapOf(
+        ComponentId("Agent chat") to ComponentEntry("Agent chat", "Prompt-kit conversation blocks and backend-neutral chat primitives.") { DemoPromptChat() },
+        ComponentId("AI rendering") to ComponentEntry("AI rendering", "Markdown, syntax-highlighted code, native JSX previews, and images.") { DemoPromptRendering() },
+        ComponentId("Agent status") to ComponentEntry("Agent status", "Streams, tools, reasoning, sources, feedback, and loaders.") { DemoPromptStatus() },
+        ComponentId("Terminal") to ComponentEntry("Terminal", "Embedded xterm.js with mobile extra keys.") { DemoTerminal() },
+        ComponentId("Metal button") to ComponentEntry("Metal button", "The metal-fx liquid-metal effect in native Compose.") { DemoMetalButton() },
+        ComponentId("Editor themes") to ComponentEntry("Editor themes", "Soviet, Flume, and bundled Departure Mono.") { DemoEditorThemes() },
         ComponentId("Typography") to ComponentEntry(
             name = stringResource(Res.string.components_registry_typography),
             description = stringResource(Res.string.components_registry_styles_for_headings_paragraphs_lists_etc),

@@ -1,4 +1,5 @@
 package com.github.jershell.shadcn.components.contextmenu
+import com.github.jershell.shadcn.motion.shadcnMenuAppearance
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -183,6 +184,7 @@ private fun ContextMenuPanel(
         Column(
             modifier = Modifier
                 .menuPanelStyle(minWidth = BaseTokens.token128)
+                .shadcnMenuAppearance()
                 .then(navigation)
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Tab)) {

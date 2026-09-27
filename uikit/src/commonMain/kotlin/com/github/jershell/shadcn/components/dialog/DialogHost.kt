@@ -12,6 +12,7 @@ import com.github.jershell.shadcn.generated.resources.dialog_cancel
 import com.github.jershell.shadcn.generated.resources.dialog_confirm
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import com.github.jershell.shadcn.motion.motionDurationMillis
 
 /**
  * Window-level host rendering the [DialogManager] queue, mirroring the Base UI
@@ -91,9 +92,10 @@ fun DialogHost(manager: DialogManager = Dialogs.manager) {
         }
     }
 
-    LaunchedEffect(current.id, current.exiting) {
+    val exitMillis = motionDurationMillis(DialogAnimMillis)
+    LaunchedEffect(current.id, current.exiting, exitMillis) {
         if (current.exiting) {
-            delay(DialogAnimMillis + 50L)
+            delay(exitMillis.toLong())
             manager.finalizeRemove(current.id)
         }
     }

@@ -1,5 +1,9 @@
 package com.github.jershell.shadcn.components.dropdownmenu
 
+import com.github.jershell.shadcn.motion.shadcnMenuEnter
+import com.github.jershell.shadcn.motion.shadcnMenuExit
+import com.github.jershell.shadcn.motion.LocalMenuMotionOrigin
+import com.github.jershell.shadcn.motion.menuMotionOrigin
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -136,7 +140,10 @@ fun DropdownMenu(
     anchor: @Composable () -> Unit,
     content: @Composable DropdownMenuScope.() -> Unit,
 ) {
-    CompositionLocalProvider(LocalDropdownMenuClose provides { onExpandedChange(false) }) {
+    CompositionLocalProvider(
+        LocalDropdownMenuClose provides { onExpandedChange(false) },
+        LocalMenuMotionOrigin provides menuMotionOrigin(side),
+    ) {
         UnstyledDropdownMenu(
             expanded = expanded,
             onExpandedChange = onExpandedChange,
@@ -175,6 +182,8 @@ fun DropdownMenuScope.DropdownMenuContent(
 ) {
     MenuKeyboardNavigation { navigation ->
         DropdownMenuPanel(
+            enter = shadcnMenuEnter(),
+            exit = shadcnMenuExit(),
             modifier = modifier.then(navigation).menuPanelStyle(minWidth = BaseTokens.token128), // min-w-[8rem]
             content = { with(DropdownMenuEntryScopeInstance) { content() } },
         )
@@ -194,6 +203,8 @@ fun DropdownMenuScope.MenuPanel(
 ) {
     MenuKeyboardNavigation { navigation ->
         DropdownMenuPanel(
+            enter = shadcnMenuEnter(),
+            exit = shadcnMenuExit(),
             modifier = modifier.then(navigation).menuPanelStyle(minWidth = minWidth),
             content = { with(DropdownMenuEntryScopeInstance) { content() } },
         )
@@ -409,6 +420,8 @@ fun DropdownMenuEntryScope.DropdownMenuSub(
             }) {
                 MenuKeyboardNavigation { navigation ->
                     DropdownMenuPanel(
+                        enter = shadcnMenuEnter(menuMotionOrigin(placement.side)),
+                        exit = shadcnMenuExit(menuMotionOrigin(placement.side)),
                         modifier = modifier.then(navigation).then(placement.panelModifier)
                             .menuPanelStyle(minWidth = BaseTokens.token128)
                             .onFocusChanged { panelFocused = it.isFocused }
