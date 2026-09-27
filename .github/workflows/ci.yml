@@ -54,6 +54,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - run: sdkmanager 'platforms;android-37'
       - uses: gradle/actions/setup-gradle@v4
       - run: bash ./gradlew :uikit:compileAndroidMain :uikit:compileKotlinWasmJs --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
@@ -69,5 +71,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
       - run: bash ./gradlew :uikit:compileKotlinIosArm64 :uikit:compileKotlinIosSimulatorArm64 --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
