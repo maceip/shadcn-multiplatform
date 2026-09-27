@@ -107,6 +107,7 @@ class RenderingInteractionTest {
     fun markdownTaskAccessibleNameUsesFormattedLabelAndUpdatesWithStreamingContent() = runComposeUiTest {
         var source by mutableStateOf("- [ ] **Bold** [linked](https://example.com) `inline`")
         setContent { ShadcnTheme { Markdown(source, immediate = true) } }
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(isToggleable()).fetchSemanticsNodes().size == 1 }
         val actualDescription = onAllNodes(isToggleable()).fetchSemanticsNodes().single()
             .config[SemanticsProperties.ContentDescription]
         assertEquals(listOf("Bold linked inline"), actualDescription,
@@ -114,6 +115,8 @@ class RenderingInteractionTest {
                 actualDescription.joinToString { label -> label.map { "U+" + it.code.toString(16).padStart(4, '0') }.joinToString(" ") })
         onNodeWithContentDescription("Bold linked inline").assertIsOff().assertIsNotEnabled()
         runOnIdle { source = "- [x] **Finished**" }
+        // Markdown parsing runs outside Compose's test clock; wait for the new document to render.
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithContentDescription("Finished").fetchSemanticsNodes().size == 1 }
         onNodeWithContentDescription("Bold linked inline").assertDoesNotExist()
         onNodeWithContentDescription("Finished").assertIsOn().assertIsNotEnabled()
         onAllNodesWithText("Finished").assertCountEquals(1)
