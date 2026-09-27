@@ -15,7 +15,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextDecoration
 import com.composeunstyled.theme.Theme
-import com.github.jershell.shadcn.components.checkbox.Checkbox
 import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
@@ -79,7 +78,7 @@ object PromptMarkdownDefaults {
         checkbox = { model ->
             val marker = model.content.substring(model.node.startOffset, model.node.endOffset)
             // GFM task inputs are read-only in rendered chat text, as in react-markdown.
-            Checkbox(checked = marker.contains("[x]", ignoreCase = true), onCheckedChange = {}, enabled = false,
+            MarkdownTaskCheckbox(checked = marker.contains("[x]", ignoreCase = true), label = markdownTaskLabel(model),
                 modifier = Modifier.padding(top = BaseTokens.token4, end = BaseTokens.token8))
         },
         codeFence = { model ->

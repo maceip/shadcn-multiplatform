@@ -70,6 +70,7 @@ import com.composeunstyled.rememberModalBottomSheetState
 import com.composeunstyled.theme.Theme
 import com.github.jershell.shadcn.components.modal.ShadcnModalLayer
 import com.github.jershell.shadcn.components.modal.ShadcnModalContentLifecycle
+import com.github.jershell.shadcn.components.modal.shadcnModalFocusRestorer
 import com.github.jershell.shadcn.generated.resources.Res
 import com.github.jershell.shadcn.generated.resources.drawer_close
 import com.github.jershell.shadcn.theme.BaseTokens
@@ -245,6 +246,7 @@ private fun BottomDrawer(
                             } else false
                         }
                         .focusRequester(panelFocus)
+                        .shadcnModalFocusRestorer()
                         .focusable(),
                 ) {
                     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -308,9 +310,9 @@ private fun SideDrawer(
         slideOutHorizontally(tween(motionDurationMillis(300))) { -it } + fadeOut(tween(motionDurationMillis(200)))
     }
 
-    ShadcnModalLayer(open) {
+    ShadcnModalLayer(open) { hostedOpen ->
         UnstyledDialog(
-            visible = open,
+            visible = hostedOpen,
             onDismissRequest = { onOpenChange(false) },
             properties = DialogProperties(),
             overlay = {
@@ -345,6 +347,7 @@ private fun SideDrawer(
                                 spotColor = Effects.boxShadowShadowLgToken1.color,
                             )
                             .background(colors.background)
+                            .shadcnModalFocusRestorer()
                             .focusable(),
                     ) {
                         Column(Modifier.fillMaxSize().focusRequester(contentFocus), content = content)

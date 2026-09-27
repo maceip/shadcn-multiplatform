@@ -12,16 +12,55 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
+import com.composeunstyled.DialogProperties
 import com.github.jershell.shadcn.components.button.*
 import com.github.jershell.shadcn.components.dialog.Dialog
 import com.github.jershell.shadcn.components.drawer.Drawer
 import com.github.jershell.shadcn.components.drawer.DrawerSide
 import com.github.jershell.shadcn.components.modal.CanvasModalHost
 import com.github.jershell.shadcn.components.modal.LocalShadcnModalLayerBlocked
+import com.github.jershell.shadcn.components.modal.ShadcnModalLayer
 import com.github.jershell.shadcn.containers.ShadcnUI
 import kotlin.test.*
 
 class CanvasModalIntegrationTest {
+    @Test fun nonDismissibleModalDoesNotPassOutsideClicksToBackground() = runComposeUiTest {
+        var open by mutableStateOf(false)
+        var launches = 0
+        setContent { ShadcnUI(motionEnabled = false) { CanvasModalHost {
+            Button({ launches++; open = true }, Modifier.testTag("launcher")) { ButtonText("Launch") }
+            Dialog(open, { open = it }, properties = DialogProperties(dismissOnClickOutside = false)) {
+                BasicText("Modal content")
+            }
+        } } }
+        val launcherCenter = onNodeWithTag("launcher").fetchSemanticsNode().boundsInRoot.center
+        onNodeWithTag("launcher").performClick()
+        onNodeWithText("Modal content").assertExists()
+        onRoot().performTouchInput { click(launcherCenter) }
+        runOnIdle { assertEquals(1, launches); assertTrue(open) }
+        runOnIdle { open = false }
+        onNodeWithTag("launcher").performClick()
+        runOnIdle { assertEquals(2, launches) }
+    }
+
+    @Test fun firstHostedCompositionIsHiddenBeforeEntranceTransition() = runComposeUiTest {
+        var open by mutableStateOf(false)
+        val hostedVisibility = mutableListOf<Boolean>()
+        setContent { ShadcnUI(motionEnabled = false) { CanvasModalHost {
+            Button({ open = true }, Modifier.testTag("launcher")) { ButtonText("Launch") }
+            ShadcnModalLayer(open) { hostedOpen ->
+                SideEffect { hostedVisibility += hostedOpen }
+                BasicText(if (hostedOpen) "Hosted visible" else "Hosted hidden")
+            }
+        } } }
+        onNodeWithTag("launcher").performClick()
+        onNodeWithText("Hosted visible").assertExists()
+        runOnIdle {
+            assertFalse(hostedVisibility.first(), "The initial state must allow Unstyled's entrance transition")
+            assertTrue(hostedVisibility.last())
+        }
+    }
+
     @Test fun contentUpdatesRetainFocusAndRemovingOwnerReleasesNestedLayers() = runComposeUiTest {
         var mounted by mutableStateOf(true)
         var parent by mutableStateOf(false)

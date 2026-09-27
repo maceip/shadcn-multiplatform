@@ -1,6 +1,7 @@
 package com.github.jershell.shadcn.components.modal
 
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
@@ -10,6 +11,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.composeunstyled.ModalHost
@@ -21,8 +23,9 @@ val LocalShadcnModalLayerBlocked = compositionLocalOf { false }
 private val LocalCanvasModalStack = staticCompositionLocalOf<CanvasModalStack?> { null }
 private val LocalCanvasModalRegistration = staticCompositionLocalOf<CanvasModalRegistration?> { null }
 
-private class CanvasModalRegistration(context: CompositionLocalContext, val content: State<@Composable () -> Unit>) {
+private class CanvasModalRegistration(context: CompositionLocalContext, val content: State<@Composable (Boolean) -> Unit>) {
     val focus = FocusRequester()
+    val panelFocus = mutableSetOf<FocusRequester>()
     var visible by mutableStateOf(false)
     var context by mutableStateOf(context)
     var contentMounted = false
@@ -36,7 +39,11 @@ private class CanvasModalStack {
     fun register(registration: CanvasModalRegistration) {
         if (registration !in entries) {
             // Save the actual launcher, including launches from another modal.
-            (entries.lastOrNull()?.focus ?: backgroundFocus).saveFocusedChild()
+            val covered = entries.lastOrNull()
+            // Compose saves one focus-target level at a time. Our focusable panel is between
+            // the frame and its controls, so save its child before saving the frame's panel.
+            covered?.panelFocus?.forEach { it.saveFocusedChild() }
+            (covered?.focus ?: backgroundFocus).saveFocusedChild()
             entries.add(registration)
         }
     }
@@ -69,12 +76,19 @@ internal fun CanvasModalHost(content: @Composable () -> Unit) {
 
 @Composable
 private fun CanvasModalEntryView(entry: CanvasModalRegistration, blocked: Boolean) {
+    var entered by remember(entry) { mutableStateOf(false) }
+    LaunchedEffect(entry) {
+        // UnstyledDialog remembers its initial visibility. Compose it hidden first so a newly
+        // hosted dialog still runs its normal hidden-to-visible entrance transition.
+        withFrameNanos { }
+        entered = true
+    }
     CompositionLocalProvider(entry.context) {
         CanvasModalFrame(entry.focus, blocked, modal = true) {
             CompositionLocalProvider(LocalCanvasModalRegistration provides entry) {
                 // ModalHost selects Unstyled's in-scene implementation. Each layer owns its portal
                 // host, and never creates another ComposeScene semantics owner.
-                ModalHost(Modifier.fillMaxSize()) { entry.content.value() }
+                ModalHost(Modifier.fillMaxSize()) { entry.content.value(entry.visible && entered) }
             }
         }
     }
@@ -103,8 +117,11 @@ private fun CanvasModalFrame(focus: FocusRequester, blocked: Boolean, modal: Boo
         }
     }
     val semantics = if (blocked) Modifier.clearAndSetSemantics { } else Modifier
+    // Keep hit testing inside this layer even before entrance content mounts, and when a
+    // dialog disables outside-click dismissal (Unstyled then has no outside pointer handler).
+    val pointerBarrier = if (modal) Modifier.pointerInput(Unit) { detectTapGestures { } } else Modifier
     CompositionLocalProvider(LocalShadcnModalLayerBlocked provides blocked) {
-        Box(Modifier.fillMaxSize().then(semantics).focusRequester(focus)
+        Box(Modifier.fillMaxSize().then(semantics).then(pointerBarrier).focusRequester(focus)
             .focusProperties {
                 onEnter = { if (blocked) cancelFocusChange() }
                 onExit = { if (modal && !blocked) cancelFocusChange() }
@@ -127,9 +144,9 @@ private fun CanvasModalFrame(focus: FocusRequester, blocked: Boolean, modal: Boo
 
 /** Hoist a modal to the Web stack while retaining its exit animation and caller's composition locals. */
 @Composable
-internal fun ShadcnModalLayer(visible: Boolean, content: @Composable () -> Unit) {
+internal fun ShadcnModalLayer(visible: Boolean, content: @Composable (visible: Boolean) -> Unit) {
     val stack = LocalCanvasModalStack.current
-    if (stack == null) { content(); return }
+    if (stack == null) { content(visible); return }
     val context = currentCompositionLocalContext
     val currentContent = rememberUpdatedState(content)
     val registration = remember(stack) { CanvasModalRegistration(context, currentContent) }
@@ -166,4 +183,16 @@ internal fun ShadcnModalContentLifecycle() {
             registration.onContentDisposed()
         }
     }
+}
+
+/** Save a hosted panel's focused child when stacking a modal, without changing normal Tab entry. */
+@Composable
+internal fun Modifier.shadcnModalFocusRestorer(): Modifier {
+    val registration = LocalCanvasModalRegistration.current ?: return this
+    val focus = remember(registration) { FocusRequester() }
+    DisposableEffect(registration, focus) {
+        registration.panelFocus.add(focus)
+        onDispose { registration.panelFocus.remove(focus) }
+    }
+    return focusRequester(focus)
 }

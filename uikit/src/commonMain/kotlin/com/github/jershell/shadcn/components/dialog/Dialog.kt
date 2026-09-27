@@ -53,6 +53,7 @@ import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.theme.Theme
 import com.github.jershell.shadcn.components.modal.ShadcnModalLayer
 import com.github.jershell.shadcn.components.modal.ShadcnModalContentLifecycle
+import com.github.jershell.shadcn.components.modal.shadcnModalFocusRestorer
 import com.github.jershell.shadcn.generated.resources.Res
 import com.github.jershell.shadcn.generated.resources.dialog_close
 import com.github.jershell.shadcn.theme.BaseTokens
@@ -119,9 +120,9 @@ fun Dialog(
         }
     }
 
-    ShadcnModalLayer(open) {
+    ShadcnModalLayer(open) { hostedOpen ->
         UnstyledDialog(
-            visible = open,
+            visible = hostedOpen,
             onDismissRequest = { currentOnOpenChange(false) },
             properties = properties,
             overlay = {
@@ -211,6 +212,7 @@ internal fun DialogPanelBox(
             )
             .background(colors.background)
             .border(borderWidth, colors.border, shape)
+            .shadcnModalFocusRestorer()
             .focusable(),
     ) {
         Column(

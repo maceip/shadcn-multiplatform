@@ -10,10 +10,12 @@ Primary source: [published Compose UI 1.11.1 Wasm source archive](https://repo.m
 
 Only the top modal exposes semantics. Covered layers use `clearAndSetSemantics` (the affected Web renderer does not implement `hideFromAccessibility`) and deny focus entry. Tab and Shift+Tab remain in the active modal; focus is saved when covering a layer and restored after uncovering it. Nested layers restore their immediate parent, then the page. Modal content disposal releases the layer after exit motion, and removal of a composable releases its registration immediately.
 
-`LocalShadcnModalLayerBlocked` reports covered root/modal layers to HTML interop. The Wasm terminal hides and inerts its iframe while covered, without destroying its engine, controller or output. An iframe inside the active modal remains available.
+Owned focusable panels save their focused child before another modal is stacked, allowing the outer frame's recursive restoration to reach the exact launcher. This happens only when stacking a modal, preserving normal forward/backward Tab wrapping. An initial hidden composition retains Unstyled's entrance animation. A pointer barrier prevents outside taps from reaching covered content, including non-dismissible dialogs.
+
+`LocalShadcnModalLayerBlocked` reports covered root/modal layers to HTML interop. The Wasm terminal hides and inerts its iframe while covered, without destroying its engine, controller or output. An iframe inside the active modal remains available. Read-only Markdown task checkboxes apply the same containment to their HTML accessibility surface.
 
 ## Validation and removal
 
-`CanvasModalIntegrationTest` exercises nested semantics/focus restoration, forward/backward traversal, repeat opening, and both drawer forms using the same shared implementation on JVM. The full Wasm browser gallery additionally verifies real DOM semantics after Escape, nested dialogs, bottom-drawer dismissal and terminal interop. These tests must remain enabled when changing this containment.
+`CanvasModalIntegrationTest` exercises nested semantics/focus restoration, forward/backward traversal, repeat opening, both drawer forms, streaming content, owner disposal, initial hidden state and non-dismissible pointer isolation using the same shared implementation on JVM. The full Wasm browser gallery additionally verifies real DOM semantics after Escape, nested dialogs, bottom-drawer dismissal and terminal interop. These tests must remain enabled when changing this containment.
 
 Remove the Wasm adaptation only after a released Compose version restores the owner stack and all browser regressions pass with platform dialogs. The implementation uses public APIs; it does not patch private fields or generated JavaScript symbols.

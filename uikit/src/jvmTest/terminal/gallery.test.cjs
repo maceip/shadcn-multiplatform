@@ -80,6 +80,13 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
             await activate('Metal button');
             await button('Overview').waitFor({ state: 'hidden' });
           }
+          if (name === 'rendering') {
+            await activate('Open navigation');
+            await button('Overview').waitFor();
+            assert.equal(await page.getByRole('checkbox').count(), 0, 'modal hides the task checkbox HTML accessibility surface');
+            await page.keyboard.press('Escape');
+            await page.getByRole('checkbox', { name: 'Components', exact: true }).waitFor();
+          }
         }
         await page.screenshot({ path: path.join(screenshots, `${name}-${width}.png`) });
       }
@@ -92,7 +99,12 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     await button('Increment').waitFor();
     await activate('Increment');
     await page.getByText(/Count: 1/).waitFor();
+    await page.getByRole('checkbox', { name: 'Components', exact: true }).waitFor();
     assert.equal(await page.getByRole('checkbox').count(), 2, 'GFM tasks have one checkbox per item');
+    assert.equal(await page.getByRole('checkbox', { name: 'Components', exact: true }).isChecked(), true);
+    assert.equal(await page.getByRole('checkbox', { name: 'Connect your agent', exact: true }).isChecked(), false);
+    assert.equal(await page.getByRole('checkbox', { name: 'Components', exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole('checkbox', { name: 'Connect your agent', exact: true }).isDisabled(), true);
     await capture('rendering');
 
     await navigate('Agent status');
@@ -138,7 +150,9 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     assert.ok(visibleInk > 10, 'the HTML terminal does not visually cover the Compose controls below it');
     await page.setViewportSize({ width: 390, height: 1000 });
     await page.waitForTimeout(350);
-    await activate('Open navigation');
+    // A real click transfers native DOM focus from the iframe back to Compose.
+    // dispatchEvent only invokes the semantic handler and leaves focus in xterm.
+    await button('Open navigation').click({ force: true });
     await button('Overview').waitFor();
     assert.equal(await page.locator('iframe[title="Terminal"]').isVisible(), false, 'modal content covers the native HTML surface');
     assert.equal(await page.locator('iframe[title="Terminal"]').getAttribute('inert'), '');

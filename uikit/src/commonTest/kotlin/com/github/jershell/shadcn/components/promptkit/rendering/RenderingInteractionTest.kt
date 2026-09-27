@@ -91,6 +91,7 @@ class RenderingInteractionTest {
         checkboxes[2].assertIsOn().assertIsNotEnabled()
         listOf("Completed", "Pending", "Uppercase").forEachIndexed { index, label ->
             onAllNodesWithText(label).assertCountEquals(1)
+            onNodeWithContentDescription(label).assertIsNotEnabled()
             val indicator = checkboxes[index].fetchSemanticsNode().boundsInRoot
             val text = onNodeWithText(label).fetchSemanticsNode().boundsInRoot
             assertTrue(indicator.right <= text.left, "$label must sit beside its checkbox")
@@ -99,6 +100,17 @@ class RenderingInteractionTest {
         }
         onNodeWithText("Ordinary item").assertExists()
         listOf("[x]", "[X]", "[ ]", "-").forEach { onAllNodesWithText(it).assertCountEquals(0) }
+    }
+
+    @Test
+    fun markdownTaskAccessibleNameUsesFormattedLabelAndUpdatesWithStreamingContent() = runComposeUiTest {
+        var source by mutableStateOf("- [ ] **Bold** [linked](https://example.com) `inline`")
+        setContent { ShadcnTheme { Markdown(source, immediate = true) } }
+        onNodeWithContentDescription("Bold linked inline").assertIsOff().assertIsNotEnabled()
+        runOnIdle { source = "- [x] **Finished**" }
+        onNodeWithContentDescription("Bold linked inline").assertDoesNotExist()
+        onNodeWithContentDescription("Finished").assertIsOn().assertIsNotEnabled()
+        onAllNodesWithText("Finished").assertCountEquals(1)
     }
 
     @Test
