@@ -174,7 +174,7 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     assert.equal(await page.locator('iframe[title="Terminal"]').count(), 0, 'navigation disposes the native HTML host');
 
     await navigate('Dialog');
-    await activate('Open dialog');
+    await activate('Open Dialog');
     await button('Open nested dialog').waitFor();
     assert.equal(await button('Metal button').count(), 0, 'dialog isolates background semantics');
     await activate('Open nested dialog');
@@ -183,15 +183,15 @@ test('assembled Wasm galleries and Compose-to-xterm bridge work at desktop and p
     await page.keyboard.press('Escape');
     await button('Open nested dialog').waitFor();
     await page.keyboard.press('Escape');
-    await button('Open dialog').waitFor();
-    await button('Metal button').waitFor();
+    await button('Open Dialog').waitFor();
+    await button('Metal button').waitFor({ state: 'attached' });
     await navigate('Drawer');
     await activate('Open drawer');
     await button('Cancel').waitFor();
     assert.equal(await button('Metal button').count(), 0, 'bottom sheet isolates background semantics');
     await activate('Cancel');
     await button('Open drawer').waitFor();
-    await button('Metal button').waitFor();
+    await button('Metal button').waitFor({ state: 'attached' });
     assert.deepEqual(errors, [], 'no runtime exceptions or failed resources');
   } catch (error) {
     if (page) {
