@@ -25,7 +25,7 @@ The permanent regression tests are in `uikit/src/commonTest/kotlin/com/github/je
 ./gradlew :uikit:jvmTest :uikit:compileAndroidMain :uikit:compileKotlinWasmJs :demoApp:desktopApp:assemble --max-workers=2 --no-daemon --console=plain
 ```
 
-Use JDK 21 with Java 17 bytecode targets. Android requires SDK platform 37. On Windows use `gradlew.bat`; this workspace uses Android Studio's JBR. CI runs JVM interaction tests and desktop demo compilation on Linux/Windows, Android/Wasm compilation on Linux, and iOS ARM64/simulator compilation on macOS, with JUnit artifacts retained.
+Use JDK 21 with Java 17 bytecode targets. Android requires SDK platform 37 (`platforms;android-37.0` in sdkmanager). On Windows use `gradlew.bat`; this workspace uses Android Studio's JBR. CI runs JVM interaction tests and desktop demo compilation on Linux/Windows, Android/Wasm compilation on Linux, and iOS ARM64/simulator compilation on macOS, with JUnit artifacts retained.
 
 Local verification on 2026-09-27 (Windows, JBR 21): **56 tests passed, zero failures/skips** (19 existing tests plus 37 added); Android and Wasm library compilation and the desktop demo assembly completed successfully. Existing AGP/SDK compatibility and deprecated-API warnings remain; dependencies were not upgraded as part of this fix.
 
