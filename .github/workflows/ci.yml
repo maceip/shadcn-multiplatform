@@ -62,8 +62,8 @@ jobs:
             uikit/build/reports/tests/jvmTest/
             uikit/build/test-results/jvmTest/
 
-  multiplatform:
-    name: Android and Wasm compilation
+  android:
+    name: Android demo build
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -77,7 +77,26 @@ jobs:
           packages: platform-tools
       - run: sdkmanager 'platforms;android-37.0'
       - uses: gradle/actions/setup-gradle@v4
-      - run: bash ./gradlew :uikit:compileAndroidMain :uikit:compileKotlinWasmJs :demoApp:androidApp:assembleDebug :demoApp:webApp:wasmJsBrowserDevelopmentExecutableDistribution --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+      - run: bash ./gradlew :uikit:compileAndroidMain :demoApp:androidApp:assembleDebug --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+
+  wasm:
+    name: Wasm demo executable
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      # The final Wasm IR link includes the full generated icon gallery. Give it
+      # one heap instead of competing Gradle/Kotlin daemons and Android workers.
+      - run: bash ./gradlew :demoApp:webApp:wasmJsBrowserDevelopmentExecutableDistribution --max-workers=1 --no-parallel --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx5g' '-Pkotlin.compiler.execution.strategy=in-process'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm-demo
+          path: demoApp/webApp/build/dist/wasmJs/developmentExecutable/
 
   ios:
     name: iOS compilation
