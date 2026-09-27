@@ -2,18 +2,14 @@ package com.github.jershell.shadcn.components.dropdownmenu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,42 +24,47 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Lucide
 import com.composeunstyled.AnchorAlignment
 import com.composeunstyled.AnchorSide
 import com.composeunstyled.DropdownMenuPanel
 import com.composeunstyled.DropdownMenuPanelScope
 import com.composeunstyled.DropdownMenuScope
-import com.composeunstyled.EscapeHandler
-import com.composeunstyled.Portal
 import com.composeunstyled.UnstyledDropdownMenu
 import com.composeunstyled.UnstyledDropdownMenuItem
 import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.theme.Theme
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.ChevronRight
-import com.composables.icons.lucide.Lucide
-import com.github.jershell.shadcn.anchored.FlipAnchoredFloatingContent
+import com.github.jershell.shadcn.anchored.rememberMeasuredAnchorSide
 import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
@@ -144,7 +145,14 @@ fun DropdownMenu(
             alignment = alignment,
             sideOffset = sideOffset,
             alignmentOffset = alignmentOffset,
-            panel = content,
+            panel = {
+                Box(Modifier.onKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
+                        onExpandedChange(false)
+                        true
+                    } else false
+                }) { content() }
+            },
             anchor = anchor,
         )
     }
@@ -165,10 +173,12 @@ fun DropdownMenuScope.DropdownMenuContent(
     modifier: Modifier = Modifier,
     content: @Composable DropdownMenuEntryScope.() -> Unit,
 ) {
-    DropdownMenuPanel(
-        modifier = modifier.menuPanelStyle(minWidth = BaseTokens.token128), // min-w-[8rem]
-        content = { with(DropdownMenuEntryScopeInstance) { content() } },
-    )
+    MenuKeyboardNavigation { navigation ->
+        DropdownMenuPanel(
+            modifier = modifier.then(navigation).menuPanelStyle(minWidth = BaseTokens.token128), // min-w-[8rem]
+            content = { with(DropdownMenuEntryScopeInstance) { content() } },
+        )
+    }
 }
 
 /**
@@ -182,10 +192,12 @@ fun DropdownMenuScope.MenuPanel(
     minWidth: Dp,
     content: @Composable DropdownMenuEntryScope.() -> Unit,
 ) {
-    DropdownMenuPanel(
-        modifier = modifier.menuPanelStyle(minWidth = minWidth),
-        content = { with(DropdownMenuEntryScopeInstance) { content() } },
-    )
+    MenuKeyboardNavigation { navigation ->
+        DropdownMenuPanel(
+            modifier = modifier.then(navigation).menuPanelStyle(minWidth = minWidth),
+            content = { with(DropdownMenuEntryScopeInstance) { content() } },
+        )
+    }
 }
 
 /**
@@ -345,7 +357,8 @@ class DropdownMenuRadioGroupScope<K> internal constructor(
 /**
  * A submenu inside [DropdownMenuContent], matching the shadcn/ui `DropdownMenuSub`.
  * The panel opens on the end side of the trigger and closes on click outside, on
- * Escape, on ArrowLeft inside the panel or when the trigger is clicked again.
+ * Escape or ArrowLeft inside the panel. ArrowRight opens the focused trigger;
+ * horizontal arrows are mirrored in RTL. Closing restores focus to the trigger.
  *
  * @param expanded Whether the submenu panel is open.
  * @param onExpandedChange Called when the user asks to open or close the submenu.
@@ -364,32 +377,63 @@ fun DropdownMenuEntryScope.DropdownMenuSub(
     trigger: @Composable RowScope.() -> Unit,
     content: @Composable DropdownMenuEntryScope.() -> Unit,
 ) {
-    if (expanded) {
-        EscapeHandler { onExpandedChange(false) }
+    val placement = rememberMeasuredAnchorSide(AnchorSide.End, TwDimensions.gapGapToken1)
+    val triggerFocus = remember { FocusRequester() }
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val openKey = if (rtl) Key.DirectionLeft else Key.DirectionRight
+    val closeKey = if (rtl) Key.DirectionRight else Key.DirectionLeft
+    val parentClose = LocalDropdownMenuClose.current
+    val currentOnExpandedChange by rememberUpdatedState(onExpandedChange)
+    var wasExpanded by remember { mutableStateOf(false) }
+    var panelFocused by remember { mutableStateOf(false) }
+    LaunchedEffect(expanded) {
+        if (wasExpanded && !expanded) triggerFocus.requestFocus()
+        wasExpanded = expanded
     }
 
-    FlipAnchoredFloatingContent(
-        layer = { panelContent ->
-            Portal {
-                if (expanded) {
-                    DropdownMenuSubScrim(onDismiss = { onExpandedChange(false) })
-                    panelContent()
+    UnstyledDropdownMenu(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = placement.anchorModifier,
+        side = placement.side,
+        alignment = alignment,
+        sideOffset = TwDimensions.gapGapToken1,
+        panel = {
+            val panelFocusManager = LocalFocusManager.current
+            LaunchedEffect(panelFocused) {
+                if (panelFocused) panelFocusManager.moveFocus(FocusDirection.Next)
+            }
+            CompositionLocalProvider(LocalDropdownMenuClose provides {
+                currentOnExpandedChange(false)
+                parentClose()
+            }) {
+                MenuKeyboardNavigation { navigation ->
+                    DropdownMenuPanel(
+                        modifier = modifier.then(navigation).then(placement.panelModifier)
+                            .menuPanelStyle(minWidth = BaseTokens.token128)
+                            .onFocusChanged { panelFocused = it.isFocused }
+                            .onKeyEvent { event ->
+                                if (event.type == KeyEventType.KeyDown && (event.key == closeKey || event.key == Key.Escape)) {
+                                    currentOnExpandedChange(false)
+                                    true
+                                } else false
+                            },
+                        content = { with(DropdownMenuEntryScopeInstance) { content() } },
+                    )
                 }
             }
         },
-        content = {
-            DropdownMenuSubPanel(
-                modifier = modifier,
-                onDismiss = { onExpandedChange(false) },
-                content = content,
-            )
-        },
-        side = AnchorSide.End,
-        alignment = alignment,
-        sideOffset = TwDimensions.gapGapToken1,
         anchor = {
             DropdownMenuRow(
                 onClick = { onExpandedChange(!expanded) },
+                modifier = Modifier
+                    .focusRequester(triggerFocus)
+                    .onPreviewKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && event.key == openKey) {
+                            currentOnExpandedChange(true)
+                            true
+                        } else false
+                    },
                 enabled = true,
                 variant = DropdownMenuItemVariant.Default,
                 closeOnClick = false,
@@ -401,13 +445,11 @@ fun DropdownMenuEntryScope.DropdownMenuSub(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(TwDimensions.gapGapToken2),
-                ) {
-                    trigger()
-                }
+                ) { trigger() }
                 UnstyledIcon(
                     imageVector = Lucide.ChevronRight,
                     contentDescription = null,
-                    modifier = Modifier.size(TwDimensions.heightHToken4),
+                    modifier = Modifier.size(TwDimensions.heightHToken4).scale(scaleX = if (rtl) -1f else 1f, scaleY = 1f),
                     tint = Theme[ColorProps][ColorTokens.mutedForeground],
                 )
             }
@@ -562,7 +604,7 @@ private fun DropdownMenuRow(
             closeOnClick = false,
             interactionSource = interactionSourceOrDefault,
             indication = null,
-            modifier = modifier
+            modifier = modifier.menuFocusItem(enabled)
                 .fillMaxWidth()
                 .alpha(if (enabled) 1f else 0.5f)
                 .clip(shape)
@@ -599,55 +641,6 @@ private fun IndicatorSlot(
 }
 
 /**
- * Submenu panel: styled like [DropdownMenuContent], laid out vertically; focusable
- * panel with ArrowUp/ArrowDown row traversal, ArrowLeft and Escape close the panel.
- */
-@Composable
-private fun DropdownMenuSubPanel(
-    modifier: Modifier = Modifier,
-    onDismiss: () -> Unit,
-    content: @Composable DropdownMenuEntryScope.() -> Unit,
-) {
-    val focusManager = LocalFocusManager.current
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Column(
-        modifier = modifier
-            .menuPanelStyle(minWidth = BaseTokens.token128)
-            .focusRequester(focusRequester)
-            .focusable()
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) {
-                    return@onPreviewKeyEvent false
-                }
-                when (event.key) {
-                    Key.DirectionDown -> {
-                        focusManager.moveFocus(FocusDirection.Next)
-                        true
-                    }
-
-                    Key.DirectionUp -> {
-                        focusManager.moveFocus(FocusDirection.Previous)
-                        true
-                    }
-
-                    Key.DirectionLeft, Key.Escape -> {
-                        onDismiss()
-                        true
-                    }
-
-                    else -> false
-                }
-            },
-        content = { with(DropdownMenuEntryScopeInstance) { content() } },
-    )
-}
-
-/**
  * Rounded panel background of a menu: `min-w-[8rem] rounded-md border bg-popover
  * shadow-md p-1`. `width(IntrinsicSize.Max)` makes the panel as wide as its widest
  * row so every row can stretch to the panel width like radix items do.
@@ -672,17 +665,4 @@ internal fun Modifier.menuPanelStyle(minWidth: Dp): Modifier {
         .background(colors.background)
         .border(borderWidth, colors.border, shape)
         .padding(TwDimensions.paddingPxToken1) // p-1
-}
-
-@Composable
-private fun DropdownMenuSubScrim(onDismiss: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    onDismiss()
-                }
-            },
-    )
 }

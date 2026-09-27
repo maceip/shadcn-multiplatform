@@ -1,3 +1,5 @@
+> This is the **maceip fork** of jershell/shadcn-multiplatform, with modal and interaction fixes. See [FORK.md](FORK.md) for details, tests, and adoption notes. The Maven coordinates below refer to upstream releases; these fork changes are currently available from source.
+
 # shadcn-multiplatform
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.jershell/shadcn-multiplatform)](https://central.sonatype.com/artifact/com.github.jershell/shadcn-multiplatform)

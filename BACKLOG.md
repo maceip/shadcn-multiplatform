@@ -63,16 +63,12 @@ smallest overlap.
 
 ## Context Menu — deferred features
 
-- [ ] Long-press on touch devices (Android/iOS): currently right-click only.
-      On long-press-down the menu opens, and the subsequent release lands in the
-      modal scrim and closes it — need a consume-release approach or custom delay logic.
+- [x] Touch/stylus long-press opens the menu and consumes the opening release; right-click remains supported. JVM touch/mouse regression tests cover opening, selecting, and dismissal.
 
 ## Dropdown Menu — deferred features
 
-- [ ] Sub-menu: implemented locally in a basic form (`DropdownMenuSub` on FlipAnchoredFloatingContent + Portal),
-      but it is NOT radix semantics: hover-open is not done (click/ArrowRight... there is no
-      keyboard ArrowRight-open), focus management between levels is coarse, sub-in-sub nesting is untested.
-      When a sub-primitive appears in compose-unstyled — migrate.
+- [x] Submenu arrow opening, one-level closing, focus restoration, nested selection and RTL: uses platform Unstyled menus with local keyboard navigation and measured side selection.
+- [ ] Submenu hover-open and pointer-intent behavior (not implemented).
 - [ ] Panel flip — covered by the general "Flip for floating elements" item above;
       closed by a single upstream MR.
 
@@ -80,13 +76,12 @@ smallest overlap.
 
 - [ ] scrim/overlay token in the Figma export — currently `Color.Black.copy(alpha = 0.5f)`
       is hardcoded in `DialogColors.kt` (reference `bg-black/50`); add a token → regenerate → replace
-- [ ] Nested/stacked dialogs (radix style, several at once) — currently FIFO
-- [ ] Focus trap on the first interactive element of the panel (currently focus goes to the panel as a whole)
+- [x] Direct nested dialogs: platform focus isolation/restoration and topmost Escape dismissal covered by JVM tests. The managed DialogHost intentionally stays FIFO.
+- [x] Dialog first-control focus, empty-panel fallback, Tab containment, restoration and inside/outside clicks. Do not wrap ShadcnUI in an external ModalHost, which opts into the old portal-modal path.
 
 ## Slider — deferred niceties
 
-- [ ] A11y for `RangeSlider`: progress semantics over two values (the single Slider
-      has semantics via the primitive)
+- [x] RangeSlider: two independently focusable, labeled progress controls; disabled semantics/actions, snapping, bounds, keyboard and fresh pointer callbacks covered by JVM tests.
 - [ ] Verify the color difference reported by the master (all colors from tokens,
       matching shadcn neutral: track=muted=neutral-100, range/thumb-border=primary=neutral-900)
 

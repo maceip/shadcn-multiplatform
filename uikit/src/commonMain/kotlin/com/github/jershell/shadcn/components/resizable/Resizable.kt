@@ -1,8 +1,9 @@
 package com.github.jershell.shadcn.components.resizable
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,16 +13,22 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.theme.Theme
 import com.github.jershell.shadcn.theme.ColorProps
@@ -59,8 +66,11 @@ private class ResizablePanelGroupScopeImpl : ResizablePanelGroupScope {
         minSizeFraction: Float,
         content: @Composable BoxScope.() -> Unit,
     ) {
+        require(minSizeFraction.isFinite() && minSizeFraction > 0f && minSizeFraction < 1f) {
+            "minSizeFraction must be finite and between 0 and 1 (exclusive)"
+        }
         entries += ResizablePanelEntry(
-            minSizeFraction = minSizeFraction.coerceIn(0.01f, 0.95f),
+            minSizeFraction = minSizeFraction,
             content = content,
         )
     }
@@ -70,6 +80,14 @@ private class ResizablePanelGroupScopeImpl : ResizablePanelGroupScope {
     }
 }
 
+/**
+ * Panels separated by adjustable dividers. Arrow keys resize by 1%, Shift+arrow
+ * by 10%; Home/End reach the adjacent panels' minimum sizes. Horizontal arrows
+ * and dragging follow layout direction. Accessibility services can set progress.
+ *
+ * Minimum fractions must be finite, positive and sum to at most one. Changing
+ * the panel count or minima resets the split to a feasible initial layout.
+ */
 @Composable
 fun ResizablePanelGroup(
     modifier: Modifier = Modifier,
@@ -84,13 +102,21 @@ fun ResizablePanelGroup(
     if (panels.size < 2) return
 
     val minFractions = panels.map { it.minSizeFraction }
-    val panelSizes = rememberPanelSizes(panels.size)
+    require(minFractions.sum() <= 1f) { "Panel minimum fractions must sum to at most 1" }
+    require(scope.entries.first() is ResizablePanelEntry && scope.entries.last() is ResizablePanelEntry &&
+        scope.entries.zipWithNext().none { (a, b) -> a is ResizableHandleEntry && b is ResizableHandleEntry }) {
+        "Each resize handle must have a panel on both sides"
+    }
+    val panelSizes = rememberPanelSizes(minFractions)
+    val density = LocalDensity.current
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val handleSpacePx = with(density) { 10.dp.toPx() } * scope.entries.count { it is ResizableHandleEntry }
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val totalSizePx = when (orientation) {
+        val totalSizePx = (when (orientation) {
             ResizableOrientation.Horizontal -> constraints.maxWidth.toFloat().coerceAtLeast(1f)
             ResizableOrientation.Vertical -> constraints.maxHeight.toFloat().coerceAtLeast(1f)
-        }
+        } - handleSpacePx).coerceAtLeast(1f)
 
         var panelIndex = 0
         when (orientation) {
@@ -112,13 +138,18 @@ fun ResizablePanelGroup(
                             InternalResizableHandle(
                                 orientation = orientation,
                                 withHandle = entry.withHandle,
+                                value = panelSizes[leftIndex],
+                                valueRange = minFractions[leftIndex]..(panelSizes[leftIndex] + panelSizes[rightIndex] - minFractions[rightIndex]).coerceAtLeast(minFractions[leftIndex]),
+                                onValueChange = { target ->
+                                    applyResizeDelta(panelSizes, minFractions, leftIndex, rightIndex, target - panelSizes[leftIndex])
+                                },
                                 onDrag = { deltaPx ->
                                     applyResizeDelta(
                                         panelSizes = panelSizes,
                                         minFractions = minFractions,
                                         leftIndex = leftIndex,
                                         rightIndex = rightIndex,
-                                        deltaFraction = deltaPx / totalSizePx,
+                                        deltaFraction = deltaPx / totalSizePx * (if (rtl) -1f else 1f),
                                     )
                                 },
                             )
@@ -145,6 +176,11 @@ fun ResizablePanelGroup(
                             InternalResizableHandle(
                                 orientation = orientation,
                                 withHandle = entry.withHandle,
+                                value = panelSizes[topIndex],
+                                valueRange = minFractions[topIndex]..(panelSizes[topIndex] + panelSizes[bottomIndex] - minFractions[bottomIndex]).coerceAtLeast(minFractions[topIndex]),
+                                onValueChange = { target ->
+                                    applyResizeDelta(panelSizes, minFractions, topIndex, bottomIndex, target - panelSizes[topIndex])
+                                },
                                 onDrag = { deltaPx ->
                                     applyResizeDelta(
                                         panelSizes = panelSizes,
@@ -164,17 +200,10 @@ fun ResizablePanelGroup(
 }
 
 @Composable
-private fun rememberPanelSizes(panelCount: Int): SnapshotStateList<Float> {
-    val sizes = remember(panelCount) {
-        mutableStateListOf<Float>().apply {
-            repeat(panelCount) { add(1f / panelCount) }
-        }
-    }
-    if (sizes.size != panelCount) {
-        sizes.clear()
-        repeat(panelCount) { sizes += 1f / panelCount }
-    }
-    return sizes
+private fun rememberPanelSizes(minFractions: List<Float>): SnapshotStateList<Float> = remember(minFractions) {
+    // Start within every panel's constraints, including asymmetric minima.
+    val remaining = (1f - minFractions.sum()).coerceAtLeast(0f) / minFractions.size
+    mutableStateListOf<Float>().apply { addAll(minFractions.map { it + remaining }) }
 }
 
 private fun applyResizeDelta(
@@ -190,8 +219,8 @@ private fun applyResizeDelta(
     val leftMin = minFractions[leftIndex]
     val rightMin = minFractions[rightIndex]
 
-    val maxPositiveDelta = right - rightMin
-    val maxNegativeDelta = -(left - leftMin)
+    val maxPositiveDelta = (right - rightMin).coerceAtLeast(0f)
+    val maxNegativeDelta = -(left - leftMin).coerceAtLeast(0f)
     val clamped = deltaFraction.coerceIn(maxNegativeDelta, maxPositiveDelta)
 
     panelSizes[leftIndex] = left + clamped
@@ -202,8 +231,22 @@ private fun applyResizeDelta(
 private fun InternalResizableHandle(
     orientation: ResizableOrientation,
     withHandle: Boolean,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit,
     onDrag: (Float) -> Unit,
 ) {
+    val currentOnDrag by rememberUpdatedState(onDrag)
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    fun setValue(target: Float): Boolean {
+        if (!target.isFinite()) return false
+        val clamped = target.coerceIn(valueRange)
+        if (clamped == value) return false
+        onValueChange(clamped)
+        return true
+    }
     val border = Theme[ColorProps][ColorTokens.border]
     val grip = Theme[ColorProps][ColorTokens.mutedForeground].copy(alpha = 0.7f)
     val radius = Theme[DimProps][DimTokens.radiusFull]
@@ -219,6 +262,27 @@ private fun InternalResizableHandle(
     }
     Box(
         modifier = handleModifier
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(value, valueRange)
+                setProgress { setValue(it) }
+            }
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                val horizontal = orientation == ResizableOrientation.Horizontal
+                val step = if (event.isShiftPressed) 0.1f else 0.01f
+                val delta = when (event.key) {
+                    Key.DirectionRight -> if (horizontal) step * (if (rtl) -1 else 1) else return@onKeyEvent false
+                    Key.DirectionLeft -> if (horizontal) -step * (if (rtl) -1 else 1) else return@onKeyEvent false
+                    Key.DirectionDown -> if (!horizontal) step else return@onKeyEvent false
+                    Key.DirectionUp -> if (!horizontal) -step else return@onKeyEvent false
+                    Key.MoveHome -> valueRange.start - value
+                    Key.MoveEnd -> valueRange.endInclusive - value
+                    else -> return@onKeyEvent false
+                }
+                setValue(value + delta)
+                true
+            }
+            .focusable(interactionSource = interaction)
             .resizableHoverCursor(orientation)
             .pointerInput(orientation) {
                 detectDragGestures { change, dragAmount ->
@@ -228,7 +292,7 @@ private fun InternalResizableHandle(
                     } else {
                         dragAmount.y
                     }
-                    onDrag(delta)
+                    currentOnDrag(delta)
                 }
             },
         contentAlignment = Alignment.Center,
@@ -241,7 +305,7 @@ private fun InternalResizableHandle(
                 .height(1.dp)
                 .fillMaxWidth()
         }
-        Box(modifier = lineModifier.background(border))
+        Box(modifier = lineModifier.background(if (focused) Theme[ColorProps][ColorTokens.ring] else border))
 
         if (withHandle) {
             val gripModifier = when (orientation) {

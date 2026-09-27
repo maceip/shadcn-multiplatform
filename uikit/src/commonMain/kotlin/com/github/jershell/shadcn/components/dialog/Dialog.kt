@@ -2,7 +2,6 @@ package com.github.jershell.shadcn.components.dialog
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,6 +9,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,26 +27,30 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.runtime.getValue
-import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
+import com.composeunstyled.DialogPanel
 import com.composeunstyled.DialogProperties
+import com.composeunstyled.PortalHost
 import com.composeunstyled.Scrim
 import com.composeunstyled.UnstyledButton
 import com.composeunstyled.UnstyledDialog
 import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.theme.Theme
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.X
+import com.github.jershell.shadcn.generated.resources.Res
+import com.github.jershell.shadcn.generated.resources.dialog_close
 import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
@@ -53,8 +59,7 @@ import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.Effects
 import com.github.jershell.shadcn.theme.TwDimensions
 import com.github.jershell.shadcn.theme.TypographyStyles
-import com.github.jershell.shadcn.generated.resources.Res
-import com.github.jershell.shadcn.generated.resources.dialog_close
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Receiver of the [Dialog] content slot. Provides [close] to dismiss the dialog
@@ -72,8 +77,8 @@ interface DialogScope {
  * A modal dialog styled after the shadcn/ui Dialog: a centered `max-w-lg` panel with
  * `bg-background p-6 gap-4 rounded-lg border shadow-lg` over a black/50 scrim.
  *
- * Rendered through [com.composeunstyled.UnstyledDialog], so it sits in the modal layer
- * (the application root must be wrapped in [com.composeunstyled.ModalHost]), traps focus,
+ * Rendered through [com.composeunstyled.UnstyledDialog] and its platform dialog layer,
+ * which isolates keyboard focus from the application and restores it on dismissal,
  * and dismisses on Escape/back press and outside clicks per [properties].
  *
  * Build the panel with [DialogHeader] / [DialogTitle] / [DialogDescription] /
@@ -121,18 +126,23 @@ fun Dialog(
             )
         },
     ) {
-        AnimatedVisibility(
-            visible = open,
-            enter = DialogEnter,
-            exit = DialogExit,
-        ) {
-            DialogPanelBox(
-                modifier = modifier,
-                showCloseButton = showCloseButton,
-                contentPadding = contentPadding,
-                onClose = { currentOnOpenChange(false) },
-                content = { scope.content() },
-            )
+        PortalHost(Modifier.fillMaxSize()) {
+            DialogPanel(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(BaseTokens.token32)
+                    .wrapContentSize(Alignment.Center),
+                enter = DialogEnter,
+                exit = DialogExit,
+            ) {
+                DialogPanelBox(
+                    modifier = modifier,
+                    showCloseButton = showCloseButton,
+                    contentPadding = contentPadding,
+                    onClose = { currentOnOpenChange(false) },
+                    content = { scope.content() },
+                )
+            }
         }
     }
 }
@@ -159,6 +169,10 @@ internal fun DialogPanelBox(
     onClose: () -> Unit,
     content: @Composable DialogScope.() -> Unit,
 ) {
+    val contentFocus = remember { FocusRequester() }
+    // The panel remains a focus target when it has no controls, so Escape/back
+    // can still reach the modal key handler. Prefer interactive content on entry.
+    LaunchedEffect(Unit) { contentFocus.requestFocus() }
     val colors = resolveDialogColors()
     val radius = Theme[DimProps][DimTokens.radiusLg]
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
@@ -166,60 +180,55 @@ internal fun DialogPanelBox(
     val closeInteractionSource = remember { MutableInteractionSource() }
     val closeHovered by closeInteractionSource.collectIsHoveredAsState()
     val closeTint = if (closeHovered) colors.content else colors.close
+    val currentOnClose by rememberUpdatedState(onClose)
     val scope = remember {
         object : DialogScope {
             override fun close() {
-                onClose()
+                currentOnClose()
             }
         }
     }
 
-    // max-w-[calc(100%-2rem)] on small screens, sm:max-w-lg on large ones
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(BaseTokens.token32) // max-w-[calc(100%-2rem)] margin
-            .wrapContentSize(Alignment.Center),
+        modifier = modifier
+            .widthIn(max = TwDimensions.maxWidthMaxWLg) // sm:max-w-lg
+            .fillMaxWidth()
+            .clip(shape)
+            .shadow(
+                elevation = Effects.boxShadowShadowLgToken0.radius,
+                shape = shape,
+                clip = false,
+                ambientColor = Effects.boxShadowShadowLgToken0.color,
+                spotColor = Effects.boxShadowShadowLgToken1.color,
+            )
+            .background(colors.background)
+            .border(borderWidth, colors.border, shape)
+            .focusable(),
     ) {
-        Box(
-            modifier = modifier
-                .widthIn(max = TwDimensions.maxWidthMaxWLg) // sm:max-w-lg
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .clip(shape)
-                .shadow(
-                    elevation = Effects.boxShadowShadowLgToken0.radius,
-                    shape = shape,
-                    clip = false,
-                    ambientColor = Effects.boxShadowShadowLgToken0.color,
-                    spotColor = Effects.boxShadowShadowLgToken1.color,
-                )
-                .background(colors.background)
-                .border(borderWidth, colors.border, shape),
+                .padding(contentPadding)
+                .focusRequester(contentFocus),
+            verticalArrangement = Arrangement.spacedBy(TwDimensions.gapGapToken4), // gap-4
         ) {
-            Column(
+            content(scope)
+        }
+        if (showCloseButton) {
+            UnstyledButton(
+                onClick = onClose,
+                interactionSource = closeInteractionSource,
+                indication = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(contentPadding),
-                verticalArrangement = Arrangement.spacedBy(TwDimensions.gapGapToken4), // gap-4
+                    .align(Alignment.TopEnd)
+                    .padding(TwDimensions.paddingPxToken4), // top-4 right-4
             ) {
-                content(scope)
-            }
-            if (showCloseButton) {
-                UnstyledButton(
-                    onClick = onClose,
-                    interactionSource = closeInteractionSource,
-                    indication = null,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(TwDimensions.paddingPxToken4), // top-4 right-4
-                ) {
-                    UnstyledIcon(
-                        imageVector = Lucide.X,
-                        contentDescription = stringResource(Res.string.dialog_close),
-                        modifier = Modifier.size(TwDimensions.heightHToken4), // size-4
-                        tint = closeTint,
-                    )
-                }
+                UnstyledIcon(
+                    imageVector = Lucide.X,
+                    contentDescription = stringResource(Res.string.dialog_close),
+                    modifier = Modifier.size(TwDimensions.heightHToken4), // size-4
+                    tint = closeTint,
+                )
             }
         }
     }

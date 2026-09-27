@@ -4,15 +4,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +34,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -43,21 +44,26 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.UnstyledSlider
 import com.composeunstyled.theme.Theme
+import com.github.jershell.shadcn.generated.resources.Res
+import com.github.jershell.shadcn.generated.resources.range_slider_end
+import com.github.jershell.shadcn.generated.resources.range_slider_start
 import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.DimProps
 import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.Effects
 import com.github.jershell.shadcn.theme.TwDimensions
 import kotlin.math.abs
+import org.jetbrains.compose.resources.stringResource
 
 /** Sizes per the Figma layout: 4px track height, 10px thumb diameter. */
 internal val SliderTrackSize: androidx.compose.ui.unit.Dp = BaseTokens.token4
@@ -135,7 +141,8 @@ fun Slider(
 
 /**
  * A two-thumb range slider styled after the shadcn/ui Slider: taps and drags are
- * routed to the nearest thumb, keyboard arrows move the active thumb.
+ * routed to the nearest thumb. Each thumb is independently focusable and exposes
+ * progress semantics; Tab selects the other thumb and arrows adjust its value.
  *
  * The [com.composeunstyled.UnstyledSlider] primitive is single-valued, so this
  * composable implements the gesture layer on top of the same styled track and thumbs.
@@ -158,11 +165,22 @@ fun RangeSlider(
     steps: Int = 0,
     onValueChangeFinished: (() -> Unit)? = null,
 ) {
+    require(steps >= 0) { "steps must be nonnegative" }
+    require(valueRange.start.isFinite() && valueRange.endInclusive.isFinite() && valueRange.start <= valueRange.endInclusive && (valueRange.endInclusive - valueRange.start).isFinite()) {
+        "valueRange must be finite and ordered"
+    }
+    require(value.start.isFinite() && value.endInclusive.isFinite() && value.start <= value.endInclusive) {
+        "value must be finite and ordered"
+    }
     val colors = resolveSliderColors()
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isFocused by interactionSource.collectIsFocusedAsState()
+    var focusedThumb by remember { mutableIntStateOf(-1) }
+    var dragging by remember { mutableStateOf(false) }
+    val thumbFocus = remember { listOf(FocusRequester(), FocusRequester()) }
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val startLabel = stringResource(Res.string.range_slider_start)
+    val endLabel = stringResource(Res.string.range_slider_end)
     val borderWidth = Theme[DimProps][DimTokens.borderWidth]
     // 0 = lower (start) bound, 1 = upper (endInclusive)
     var activeThumb by remember { mutableIntStateOf(0) }
@@ -170,7 +188,9 @@ fun RangeSlider(
     val density = LocalDensity.current
     // The gesture layer outlives a single composition: read the value through
     // State, otherwise the commit functions see "frozen" range bounds.
-    val currentValue by rememberUpdatedState(value)
+    val currentValue by rememberUpdatedState(value.start.coerceIn(valueRange)..value.endInclusive.coerceIn(valueRange))
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
+    val currentOnFinished by rememberUpdatedState(onValueChangeFinished)
 
     val thumbRadiusPx = with(density) { (SliderThumbSize / 2).roundToPx() }
     val trackSpanPx = (rootSize.width - 2 * thumbRadiusPx).coerceAtLeast(0)
@@ -181,83 +201,98 @@ fun RangeSlider(
     }
     fun snap(v: Float): Float {
         val coerced = v.coerceIn(valueRange.start, valueRange.endInclusive)
-        if (steps <= 0) return coerced
-        val tickCount = steps + 1
+        if (steps == 0 || valueRange.start == valueRange.endInclusive) return coerced
+        val tickCount = steps.toFloat() + 1f
         val stepSize = (valueRange.endInclusive - valueRange.start) / tickCount
         val index = ((coerced - valueRange.start) / stepSize).let { kotlin.math.floor(it + 0.5f) }
         return valueRange.start + index * stepSize
     }
     fun valueAt(xPx: Float): Float {
         val clamped = xPx.coerceIn(0f, trackSpanPx.toFloat())
-        val fraction = if (trackSpanPx == 0) 0f else clamped / trackSpanPx
+        val physicalFraction = if (trackSpanPx == 0) 0f else clamped / trackSpanPx
+        val fraction = if (rtl) 1f - physicalFraction else physicalFraction
         return valueRange.start + fraction * (valueRange.endInclusive - valueRange.start)
     }
     fun lowerFraction() = fractionOf(currentValue.start)
     fun upperFraction() = fractionOf(currentValue.endInclusive)
 
-    fun commitLower(v: Float) {
-        val snapped = snap(v).coerceAtMost(currentValue.endInclusive)
-        if (snapped != currentValue.start) onValueChange(snapped..currentValue.endInclusive)
+    fun commit(thumb: Int, target: Float): Boolean {
+        if (!enabled || !target.isFinite()) return false
+        val range = currentValue
+        val next = if (thumb == 0) snap(target).coerceAtMost(range.endInclusive)..range.endInclusive
+            else range.start..snap(target).coerceAtLeast(range.start)
+        if (next == range) return false
+        currentOnValueChange(next)
+        return true
     }
-
-    fun commitUpper(v: Float) {
-        val snapped = snap(v).coerceAtLeast(currentValue.start)
-        if (snapped != currentValue.endInclusive) onValueChange(currentValue.start..snapped)
+    // Pointer handlers keep running through recompositions and layout changes.
+    val currentCommit by rememberUpdatedState(::commit)
+    val currentValueAt by rememberUpdatedState(::valueAt)
+    fun thumbModifier(thumb: Int): Modifier {
+        val lower = thumb == 0
+        val bound = if (lower) currentValue.start else currentValue.endInclusive
+        val bounds = if (lower) valueRange.start..currentValue.endInclusive else currentValue.start..valueRange.endInclusive
+        fun finishChange(target: Float): Boolean = commit(thumb, target).also { changed ->
+            if (changed) currentOnFinished?.invoke()
+        }
+        return Modifier
+            .semantics {
+                contentDescription = if (lower) startLabel else endLabel
+                progressBarRangeInfo = ProgressBarRangeInfo(bound, bounds)
+                if (!enabled) disabled()
+                setProgress { finishChange(it) }
+            }
+            .onKeyEvent { event ->
+                if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                val span = valueRange.endInclusive - valueRange.start
+                val step = if (steps > 0) span / (steps.toFloat() + 1f) else span / 100
+                val target = when (event.key) {
+                    Key.DirectionRight -> bound + step * (if (rtl) -1 else 1)
+                    Key.DirectionLeft -> bound - step * (if (rtl) -1 else 1)
+                    Key.DirectionUp -> bound + step
+                    Key.DirectionDown -> bound - step
+                    Key.MoveHome -> bounds.start
+                    Key.MoveEnd -> bounds.endInclusive
+                    else -> return@onKeyEvent false
+                }
+                finishChange(target)
+                true
+            }
+            .focusRequester(thumbFocus[thumb])
+            .onFocusChanged {
+                if (it.isFocused) { focusedThumb = thumb; activeThumb = thumb }
+                else if (focusedThumb == thumb) focusedThumb = -1
+            }
+            .focusable(enabled)
     }
 
     val gestureModifier = if (enabled) {
-        Modifier
-            .pointerInput(valueRange, steps) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    val downX = down.position.x
-                    val lowerX = thumbRadiusPx + trackSpanPx * lowerFraction()
-                    val upperX = thumbRadiusPx + trackSpanPx * upperFraction()
-                    activeThumb = if (abs(downX - lowerX) <= abs(downX - upperX)) 0 else 1
-
-                    fun apply(x: Float) {
-                        val target = valueAt(x - thumbRadiusPx)
-                        if (activeThumb == 0) {
-                            commitLower(target)
-                        } else {
-                            commitUpper(target)
-                        }
-                    }
-
-                    var drag = false
+        Modifier.pointerInput(valueRange, steps, rtl, thumbRadiusPx) {
+            awaitEachGesture {
+                val down = awaitFirstDown()
+                val target = currentValueAt(down.position.x - thumbRadiusPx)
+                activeThumb = if (abs(target - currentValue.start) <= abs(target - currentValue.endInclusive)) 0 else 1
+                thumbFocus[activeThumb].requestFocus()
+                var changed = currentCommit(activeThumb, target)
+                down.consume()
+                dragging = true
+                try {
                     while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull() ?: break
-                        if (change.changedToUp()) break
-                        val delta = change.positionChange().x
-                        if (delta != 0f) {
-                            drag = true
-                            apply(change.position.x)
-                            change.consume()
+                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                        if (change.isConsumed) break
+                        changed = currentCommit(activeThumb, currentValueAt(change.position.x - thumbRadiusPx)) || changed
+                        change.consume()
+                        if (!change.pressed) {
+                            if (changed) currentOnFinished?.invoke()
+                            break
                         }
                     }
-                    if (drag) {
-                        onValueChangeFinished?.invoke()
-                    }
+                } finally {
+                    dragging = false
                 }
             }
-            .focusable(enabled = enabled, interactionSource = interactionSource)
-    } else {
-        Modifier
-    }
-
-    val keyboardModifier = if (enabled) {
-        Modifier.keyboardRangeStepping(
-            value = value,
-            valueRange = valueRange,
-            steps = steps,
-            activeThumbProvider = { activeThumb },
-            onValueChange = onValueChange,
-            onValueChangeFinished = onValueChangeFinished,
-        )
-    } else {
-        Modifier
-    }
+        }
+    } else Modifier
 
     Box(
         modifier = modifier
@@ -267,7 +302,6 @@ fun RangeSlider(
             .alpha(if (enabled) 1f else 0.5f) // data-[disabled]:opacity-50
             .hoverable(interactionSource = interactionSource, enabled = enabled)
             .then(gestureModifier)
-            .then(keyboardModifier)
             .onSizeChanged { rootSize = it },
     ) {
         // Track with the range
@@ -306,10 +340,10 @@ fun RangeSlider(
         ) {
             with(density) {
                 SliderThumb(
-                    ringVisible = isHovered || isPressed || (isFocused && activeThumb == 0),
+                    ringVisible = isHovered || (dragging && activeThumb == 0) || focusedThumb == 0,
                     colors = colors,
                     borderWidth = borderWidth,
-                    modifier = Modifier.offset(x = (trackSpanPx * lowerFraction()).toDp()),
+                    modifier = Modifier.offset(x = (trackSpanPx * lowerFraction()).toDp()).then(thumbModifier(0)),
                 )
             }
         }
@@ -320,49 +354,14 @@ fun RangeSlider(
         ) {
             with(density) {
                 SliderThumb(
-                    ringVisible = isHovered || isPressed || (isFocused && activeThumb == 1),
+                    ringVisible = isHovered || (dragging && activeThumb == 1) || focusedThumb == 1,
                     colors = colors,
                     borderWidth = borderWidth,
-                    modifier = Modifier.offset(x = (trackSpanPx * upperFraction()).toDp()),
+                    modifier = Modifier.offset(x = (trackSpanPx * upperFraction()).toDp()).then(thumbModifier(1)),
                 )
             }
         }
     }
-}
-
-private fun Modifier.keyboardRangeStepping(
-    value: ClosedFloatingPointRange<Float>,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    activeThumbProvider: () -> Int,
-    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
-    onValueChangeFinished: (() -> Unit)?,
-): Modifier = onKeyEvent { event ->
-    if (event.type != KeyEventType.KeyDown) {
-        return@onKeyEvent false
-    }
-    val span = valueRange.endInclusive - valueRange.start
-    val stepSize = if (steps > 0) span / (steps + 1) else span * 0.01f
-    val isLower = activeThumbProvider() == 0
-    val current = if (isLower) value.start else value.endInclusive
-    val next = when (event.key) {
-        Key.DirectionRight, Key.DirectionUp -> current + stepSize
-        Key.DirectionLeft, Key.DirectionDown -> current - stepSize
-        Key.MoveHome -> if (isLower) valueRange.start else value.start
-        Key.MoveEnd -> if (isLower) value.endInclusive else valueRange.endInclusive
-        else -> return@onKeyEvent false
-    }
-    val coerced = next.coerceIn(
-        if (isLower) valueRange.start else value.start,
-        if (isLower) value.endInclusive else valueRange.endInclusive,
-    )
-    if (isLower) {
-        onValueChange(coerced..value.endInclusive)
-    } else {
-        onValueChange(value.start..coerced)
-    }
-    onValueChangeFinished?.invoke()
-    true
 }
 
 @Composable

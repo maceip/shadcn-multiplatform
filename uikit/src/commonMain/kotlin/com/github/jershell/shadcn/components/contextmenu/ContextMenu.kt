@@ -2,6 +2,7 @@ package com.github.jershell.shadcn.components.contextmenu
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,9 +12,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -23,25 +24,27 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.round
 import com.composeunstyled.AnchorAlignment
 import com.composeunstyled.AnchorSide
-import com.composeunstyled.EscapeHandler
-import com.composeunstyled.Portal
+import com.composeunstyled.Modal
+import com.composeunstyled.rememberModalState
 import com.github.jershell.shadcn.anchored.FlipAnchoredFloatingContent
 import com.github.jershell.shadcn.components.dropdownmenu.DropdownMenuEntryScope
 import com.github.jershell.shadcn.components.dropdownmenu.DropdownMenuEntryScopeInstance
 import com.github.jershell.shadcn.components.dropdownmenu.LocalDropdownMenuClose
+import com.github.jershell.shadcn.components.dropdownmenu.MenuKeyboardNavigation
 import com.github.jershell.shadcn.components.dropdownmenu.menuPanelStyle
 import com.github.jershell.shadcn.theme.BaseTokens
-import androidx.compose.ui.unit.round
 import kotlin.math.roundToInt
 
 /**
@@ -55,9 +58,9 @@ import kotlin.math.roundToInt
  * [com.github.jershell.shadcn.components.dropdownmenu.DropdownMenuCheckboxItem],
  * [com.github.jershell.shadcn.components.dropdownmenu.DropdownMenuRadioGroup] etc.
  *
- * Long-press on touch devices is not handled in this version (BACKLOG).
+ * Touch and stylus long-presses open the same menu and consume the opening gesture.
  *
- * @param enabled Whether the area reacts to right clicks.
+ * @param enabled Whether the area reacts to right clicks and long presses.
  * @param modifier Modifier applied to the trigger area container.
  * @param menu Panel content; use the Dropdown Menu row composables.
  * @param content The area the context menu opens for.
@@ -77,14 +80,20 @@ fun ContextMenu(
     var anchorSize by remember { mutableStateOf(IntSize.Zero) }
     val close: () -> Unit = remember { { open = false } }
 
-    if (open) {
-        EscapeHandler { open = false }
-    }
+    LaunchedEffect(enabled) { if (!enabled) open = false }
+
+    val modalState = rememberModalState()
+    LaunchedEffect(open) { modalState.transitionState.targetState = open }
 
     CompositionLocalProvider(LocalDropdownMenuClose provides close) {
         FlipAnchoredFloatingContent(
             layer = { panelContent ->
-                Portal {
+                Modal(state = modalState, onKeyEvent = { event ->
+                    if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Back)) {
+                        close()
+                        true
+                    } else false
+                }) {
                     if (open) {
                         ContextMenuScrim(
                             onSecondaryClick = { positionInWindow ->
@@ -121,26 +130,34 @@ fun ContextMenu(
                         .pointerInput(enabled) {
                             if (!enabled) return@pointerInput
                             awaitEachGesture {
-                                // Wait for a press; the first event of a gesture may be a move.
-                                var press: androidx.compose.ui.input.pointer.PointerEvent? = null
-                                while (true) {
-                                    val candidate = awaitPointerEvent(PointerEventPass.Initial)
-                                    if (candidate.changes.any { it.pressed }) {
-                                        press = candidate
-                                        break
-                                    }
+                                // awaitFirstDown filters non-primary mouse buttons on
+                                // desktop, so detect the initial transition explicitly.
+                                var press = awaitPointerEvent(PointerEventPass.Initial)
+                                while (press.changes.none { it.changedToDownIgnoreConsumed() }) {
+                                    press = awaitPointerEvent(PointerEventPass.Initial)
                                 }
-                                val down = press ?: return@awaitEachGesture
-                                if (down.buttons.isSecondaryPressed.not()) {
-                                    return@awaitEachGesture
+                                val down = press.changes.first { it.changedToDownIgnoreConsumed() }
+                                if (press.buttons.isSecondaryPressed) {
+                                    val position = down.position
+                                    down.consume()
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        event.changes.forEach { it.consume() }
+                                    } while (event.changes.any { it.pressed })
+                                    cursorInAnchor = position
+                                    open = true
+                                } else if (down.type != PointerType.Mouse) {
+                                    val longPress = awaitLongPressOrCancellation(down.id)
+                                        ?: return@awaitEachGesture
+                                    cursorInAnchor = longPress.position
+                                    open = true
+                                    // The opening finger must not activate an item or dismiss
+                                    // the newly composed scrim when it is released.
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        event.changes.forEach { it.consume() }
+                                    } while (event.changes.any { it.pressed })
                                 }
-                                val position = down.changes.firstOrNull()?.position ?: return@awaitEachGesture
-                                while (true) {
-                                    val release = awaitPointerEvent(PointerEventPass.Initial)
-                                    if (release.changes.all { !it.pressed }) break
-                                }
-                                cursorInAnchor = position
-                                open = true
                             }
                         },
                 ) {
@@ -160,43 +177,24 @@ private fun ContextMenuPanel(
     onDismiss: () -> Unit,
     content: @Composable DropdownMenuEntryScope.() -> Unit,
 ) {
-    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Column(
-        modifier = Modifier
-            .menuPanelStyle(minWidth = BaseTokens.token128)
-            .focusRequester(focusRequester)
-            .focusable()
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) {
-                    return@onPreviewKeyEvent false
-                }
-                when (event.key) {
-                    Key.DirectionDown -> {
-                        focusManager.moveFocus(FocusDirection.Next)
-                        true
-                    }
-
-                    Key.DirectionUp -> {
-                        focusManager.moveFocus(FocusDirection.Previous)
-                        true
-                    }
-
-                    Key.Escape -> {
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    MenuKeyboardNavigation { navigation ->
+        Column(
+            modifier = Modifier
+                .menuPanelStyle(minWidth = BaseTokens.token128)
+                .then(navigation)
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Tab)) {
                         onDismiss()
                         true
-                    }
-
-                    else -> false
+                    } else false
                 }
-            },
-        content = { with(DropdownMenuEntryScopeInstance) { content() } },
-    )
+                .focusRequester(focusRequester)
+                .focusable(),
+            content = { with(DropdownMenuEntryScopeInstance) { content() } },
+        )
+    }
 }
 
 /**
@@ -210,6 +208,8 @@ private fun ContextMenuScrim(
     onSecondaryClick: (Offset) -> Unit,
     onPrimaryClick: () -> Unit,
 ) {
+    val currentSecondaryClick by rememberUpdatedState(onSecondaryClick)
+    val currentPrimaryClick by rememberUpdatedState(onPrimaryClick)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -219,7 +219,7 @@ private fun ContextMenuScrim(
                     var isSecondaryPress = false
                     while (true) {
                         val down = awaitPointerEvent(PointerEventPass.Initial)
-                        if (down.changes.any { it.pressed }) {
+                        if (down.changes.any { it.changedToDownIgnoreConsumed() }) {
                             isSecondaryPress = down.buttons.isSecondaryPressed
                             break
                         }
@@ -231,9 +231,9 @@ private fun ContextMenuScrim(
                         val isSecondary = isSecondaryPress
                         val position = release.changes.firstOrNull()?.position ?: Offset.Zero
                         if (isSecondary) {
-                            onSecondaryClick(position)
+                            currentSecondaryClick(position)
                         } else {
-                            onPrimaryClick()
+                            currentPrimaryClick()
                         }
                         break
                     }

@@ -1,0 +1,73 @@
+name: Verify library
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm:
+    name: JVM interactions (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Tests and desktop demo compilation (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bash ./gradlew :uikit:jvmTest :demoApp:desktopApp:assemble --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+      - name: Tests and desktop demo compilation (Windows)
+        if: runner.os == 'Windows'
+        run: .\gradlew.bat :uikit:jvmTest :demoApp:desktopApp:assemble --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jvm-tests-${{ matrix.os }}
+          path: |
+            uikit/build/reports/tests/jvmTest/
+            uikit/build/test-results/jvmTest/
+
+  multiplatform:
+    name: Android and Wasm compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-37'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: bash ./gradlew :uikit:compileAndroidMain :uikit:compileKotlinWasmJs --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+
+  ios:
+    name: iOS compilation
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - run: bash ./gradlew :uikit:compileKotlinIosArm64 :uikit:compileKotlinIosSimulatorArm64 --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'

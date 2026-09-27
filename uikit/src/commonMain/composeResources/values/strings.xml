@@ -53,4 +53,6 @@
     <string name="spinner_loading">Loading</string>
 
     <string name="toast_dismiss_notification">Dismiss notification</string>
+    <string name="range_slider_start">Range start</string>
+    <string name="range_slider_end">Range end</string>
 </resources>

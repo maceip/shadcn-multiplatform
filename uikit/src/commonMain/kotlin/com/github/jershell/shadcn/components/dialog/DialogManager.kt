@@ -1,8 +1,8 @@
 package com.github.jershell.shadcn.components.dialog
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -76,14 +76,14 @@ class DialogManager {
 
     /**
      * Starts the dismiss animation of the dialog with [id]. No-op for unknown,
-     * already exiting or queued (not yet shown) dialogs.
+     * already exiting dialogs. Queued (not yet shown) dialogs are removed immediately.
      */
     fun close(id: Long) {
         val entry = entries.firstOrNull { it.id == id && !it.exiting } ?: return
         // Only the front dialog is on screen; queued ones are removed instantly.
         if (entries.first() === entry) {
-            entry.spec.onCancel?.invoke()
             entry.exiting = true
+            entry.spec.onCancel?.invoke()
         } else {
             entries.removeAll { it.id == id }
         }
@@ -94,8 +94,9 @@ class DialogManager {
      * dialog currently on screen.
      */
     fun clear() {
-        entries.firstOrNull()?.spec?.onCancel?.invoke()
+        val active = entries.firstOrNull()?.takeUnless { it.exiting }
         entries.clear()
+        active?.spec?.onCancel?.invoke()
     }
 
     internal fun finalizeRemove(id: Long) {

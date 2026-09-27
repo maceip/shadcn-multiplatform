@@ -1,12 +1,12 @@
 package com.github.jershell.shadcn.components.drawer
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,13 +41,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.RectangleShape
-import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.X
+import com.composeunstyled.DialogPanel
 import com.composeunstyled.DialogProperties
 import com.composeunstyled.ModalBottomSheetProperties
+import com.composeunstyled.PortalHost
 import com.composeunstyled.Scrim
 import com.composeunstyled.Sheet
 import com.composeunstyled.SheetDetent
@@ -56,8 +67,8 @@ import com.composeunstyled.UnstyledIcon
 import com.composeunstyled.UnstyledModalBottomSheet
 import com.composeunstyled.rememberModalBottomSheetState
 import com.composeunstyled.theme.Theme
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.X
+import com.github.jershell.shadcn.generated.resources.Res
+import com.github.jershell.shadcn.generated.resources.drawer_close
 import com.github.jershell.shadcn.theme.BaseTokens
 import com.github.jershell.shadcn.theme.ColorProps
 import com.github.jershell.shadcn.theme.ColorTokens
@@ -66,8 +77,7 @@ import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.Effects
 import com.github.jershell.shadcn.theme.TwDimensions
 import com.github.jershell.shadcn.theme.TypographyStyles
-import com.github.jershell.shadcn.generated.resources.Res
-import com.github.jershell.shadcn.generated.resources.drawer_close
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The edge a [Drawer] slides from.
@@ -110,7 +120,7 @@ class DrawerScope internal constructor(
  *    `showDragHandle = false`, `showCloseButton = true` — a plain slide-in panel with
  *    the close (X) button, like the reference `sheet.tsx` built on Radix Dialog.
  *
- * The application root must be wrapped in [com.composeunstyled.ModalHost].
+ * Uses the platform modal layer under [com.github.jershell.shadcn.containers.ShadcnUI].
  *
  * @param open Whether the drawer is visible.
  * @param onOpenChange Called when the user dismisses the drawer (scrim click,
@@ -211,23 +221,37 @@ private fun BottomDrawer(
             )
         },
     ) {
-        Sheet(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(Theme[ColorProps][ColorTokens.background]),
-        ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val maxPanelHeight = maxHeight * maxHeightFraction
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = maxPanelHeight)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    if (showDragHandle) {
-                        DragHandle()
+        PortalHost(Modifier.fillMaxSize()) {
+            val panelFocus = remember { FocusRequester() }
+            val contentFocus = remember { FocusRequester() }
+            LaunchedEffect(Unit) {
+                if (!contentFocus.requestFocus()) panelFocus.requestFocus()
+            }
+            Sheet(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(Theme[ColorProps][ColorTokens.background])
+                    .onKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown && (event.key == Key.Escape || event.key == Key.Back)) {
+                            onOpenChange(false)
+                            true
+                        } else false
                     }
-                    content()
+                    .focusRequester(panelFocus)
+                    .focusable(),
+            ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val maxPanelHeight = maxHeight * maxHeightFraction
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxPanelHeight)
+                            .verticalScroll(rememberScrollState())
+                            .focusRequester(contentFocus),
+                    ) {
+                        if (showDragHandle) DragHandle()
+                        content()
+                    }
                 }
             }
         }
@@ -288,22 +312,21 @@ private fun SideDrawer(
             )
         },
     ) {
-        AnimatedVisibility(
-            visible = open,
-            enter = enter,
-            exit = exit,
-        ) {
-            val colors = resolveDrawerPanelColors()
-            val panelShape = RectangleShape
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = if (alignToEnd) Alignment.CenterEnd else Alignment.CenterStart,
+        PortalHost(Modifier.fillMaxSize()) {
+            DialogPanel(
+                modifier = Modifier.fillMaxSize().wrapContentSize(
+                    if (alignToEnd) Alignment.CenterEnd else Alignment.CenterStart,
+                ),
+                enter = enter,
+                exit = exit,
             ) {
-                Column(
+                val colors = resolveDrawerPanelColors()
+                val contentFocus = remember { FocusRequester() }
+                LaunchedEffect(Unit) { contentFocus.requestFocus() }
+                Box(
                     modifier = modifier
                         .fillMaxHeight()
-                        .width(panelWidth) // max-w-sm
+                        .width(panelWidth)
                         .shadow(
                             elevation = Effects.boxShadowShadowLgToken0.radius,
                             shape = RectangleShape,
@@ -311,23 +334,19 @@ private fun SideDrawer(
                             ambientColor = Effects.boxShadowShadowLgToken0.color,
                             spotColor = Effects.boxShadowShadowLgToken1.color,
                         )
-                        .background(colors.background),
+                        .background(colors.background)
+                        .focusable(),
                 ) {
-                    content()
-                }
-                // border-l / border-r of the reference
-                EdgeLine(
-                    panelAtEnd = alignToEnd,
-                    modifier = Modifier.align(
-                        if (alignToEnd) Alignment.CenterStart else Alignment.CenterEnd,
-                    ),
-                )
-                if (showCloseButton) {
-                    CloseButton(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(BaseTokens.token16), // top-4 right-4
+                    Column(Modifier.fillMaxSize().focusRequester(contentFocus), content = content)
+                    EdgeLine(
+                        panelAtEnd = alignToEnd,
+                        modifier = Modifier.align(if (alignToEnd) Alignment.CenterStart else Alignment.CenterEnd),
                     )
+                    if (showCloseButton) {
+                        CloseButton(
+                            modifier = Modifier.align(Alignment.TopEnd).padding(BaseTokens.token16),
+                        )
+                    }
                 }
             }
         }
