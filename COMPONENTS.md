@@ -103,7 +103,7 @@ The source choice, pinned revisions, implementation checklist and validation evi
 | Prompt Kit agent status | ResponseStream/TextStream, all twelve Loader variants, Reasoning, Tool, Source, Steps, SystemMessage, ChainOfThought, TextShimmer, ThinkingBar, FeedbackBar. |
 | Prompt Kit blocks | All ten source compositions, plus Chatbot and ToolCallingChatbot with an injected cancellable transport. History switching resets local draft/scroll state; retry preserves failed input. |
 | Terminal | Real offline xterm.js engine in Android WebView, iOS WKWebView, Wasm iframe and desktop JCEF; bounded output/acknowledgement, input/resize, mobile extra keys, explicit desktop initialization. Host supplies shell/PTY transport. |
-| MetalButton | Single metal-fx button port with source noise/plasma/palettes/glow mathematics, native Canvas perimeter sampling, paused/reduced-motion lifecycle, three presets. |
+| MetalButton | Single metal-fx button port with source noise/plasma/palettes/glow mathematics, native Canvas perimeter sampling, paused/reduced-motion lifecycle, three presets, optional Shadcn button surfaces and foregrounds. |
 | Text/code themes | Soviet Dark/Light and Flume Dusk/Opal/Mira/Mesa, including syntax roles and sixteen ANSI colors. |
 | Departure Mono | Offline font resource and opt-in typography provider, distributed with OFL license. |
 | Motion | Shared platform-aware reduced-motion provider; targeted appearance/resize/checkbox transitions plus existing motion integration. See [motion audit](docs/MOTION_AUDIT.md). |

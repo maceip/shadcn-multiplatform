@@ -4,6 +4,7 @@ package com.github.jershell.shadcn.components.metalbutton
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -23,6 +24,10 @@ import androidx.compose.ui.unit.IntSize
 import com.composeunstyled.UnstyledButton
 import com.composeunstyled.focusRing
 import com.composeunstyled.theme.Theme
+import com.github.jershell.shadcn.components.button.ButtonVariant
+import com.github.jershell.shadcn.components.button.LocalButtonContentColor
+import com.github.jershell.shadcn.components.button.LocalButtonTextStyle
+import com.github.jershell.shadcn.components.button.resolveButtonColors
 import com.github.jershell.shadcn.motion.LocalShadcnMotionEnabled
 import com.github.jershell.shadcn.theme.*
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +47,8 @@ private class MetalClock { var seconds = 0.0 }
  * [paused] freezes the current frame; [active] lets hosts stop rendering inactive screens.
  * Offscreen, disabled and reduced-motion instances never run a repeating render loop.
  * [strength] changes effect opacity only; it never makes the button label disappear.
+ * [buttonVariant] optionally uses the existing Shadcn button surface/foreground tokens.
+ * Null retains metal-fx's original card surface. [ButtonVariant.Default] provides a solid primary action.
  */
 @Composable
 fun MetalButton(
@@ -59,6 +66,7 @@ fun MetalButton(
     borderRadius: Dp? = null,
     scale: Float = 1f,
     animationsEnabled: Boolean = LocalShadcnMotionEnabled.current,
+    buttonVariant: ButtonVariant? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     require(strength.isFinite() && strength in 0f..1f)
@@ -71,8 +79,10 @@ fun MetalButton(
     val mode = remember(preset, dark) { metalMode(preset, dark) }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val surface = Theme[ColorProps][if (pressed) ColorTokens.accent else ColorTokens.card]
-    val foreground = Theme[ColorProps][ColorTokens.cardForeground]
+    val hovered by interaction.collectIsHoveredAsState()
+    val buttonColors = buttonVariant?.let { resolveButtonColors(it, hovered, pressed) }
+    val surface = buttonColors?.container ?: Theme[ColorProps][if (pressed) ColorTokens.accent else ColorTokens.card]
+    val foreground = buttonColors?.content ?: Theme[ColorProps][ColorTokens.cardForeground]
     val focus = Theme[ColorProps][ColorTokens.ring]
     var pixels by remember { mutableStateOf(IntSize.Zero) }
     var visible by remember { mutableStateOf(false) }
@@ -112,7 +122,7 @@ fun MetalButton(
         pixels = it.size
         val bounds = it.boundsInWindow()
         visible = bounds.width > 0f && bounds.height > 0f
-    }) {
+    }, propagateMinConstraints = true) {
         Canvas(Modifier.matchParentSize()) {
             scale(density, density, Offset.Zero) {
                 drawRoundRect(surface, size = Size(width, height), cornerRadius = CornerRadius(geometry.radius))
@@ -137,9 +147,12 @@ fun MetalButton(
                 .focusRing(interactionSource = interaction, width = Effects.boxShadowFocusRing.spread,
                     color = focus, shape = shape),
         ) {
-            Row(Modifier.padding(horizontal = if (variant == MetalVariant.Button) BaseTokens.token24 else BaseTokens.token8,
-                vertical = BaseTokens.token8), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(BaseTokens.token8), content = content)
+            CompositionLocalProvider(LocalButtonContentColor provides foreground,
+                LocalButtonTextStyle provides TypographyStyles.textSmMedium) {
+                Row(Modifier.padding(horizontal = if (variant == MetalVariant.Button) BaseTokens.token24 else BaseTokens.token8,
+                    vertical = BaseTokens.token8), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(BaseTokens.token8), content = content)
+            }
         }
     }
 }
@@ -148,10 +161,10 @@ fun MetalButton(
 fun MetalButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     enabled: Boolean = true, preset: MetalPreset = MetalPreset.Chromatic,
     strength: Float = 1f, paused: Boolean = false, active: Boolean = true,
-    animationsEnabled: Boolean = LocalShadcnMotionEnabled.current) {
+    animationsEnabled: Boolean = LocalShadcnMotionEnabled.current, buttonVariant: ButtonVariant? = null) {
     MetalButton(onClick, modifier, enabled, preset, strength = strength, paused = paused, active = active,
-        animationsEnabled = animationsEnabled) {
-        BasicText(text, style = TypographyStyles.textSmMedium.copy(color = Theme[ColorProps][ColorTokens.cardForeground]))
+        animationsEnabled = animationsEnabled, buttonVariant = buttonVariant) {
+        BasicText(text, style = TypographyStyles.textSmMedium.copy(color = LocalButtonContentColor.current))
     }
 }
 
