@@ -138,38 +138,6 @@
                     <string name="card_usage">Usage:</string>
                     <string name="card_your_project_will_be_created_with_a_default_conf">Your project will be created with a default configuration.</string>
                     <string name="carousel_slide_x_of_x">Slide %1$s of %2$s</string>
-                    <string name="charts_1_color_list_semantics_differ_per_chart_type_for">1. Color list semantics differ per chart type. For Bar, Histogram, StackedBar, Radar and Pie the color list is PER DATA POINT / CATEGORY (list size must equal the number of points, or validation fails with &quot;Colors size N does not match expected M&quot;). For Line (including multi-series) and StackedArea the color list is PER SERIES (list size must equal the number of series/items). Omitting the color list falls back to a single color and skips the validation.</string>
-                    <string name="charts_2_the_chart_title_and_legend_are_rendered_by_the">2. The chart title and legend are rendered by the library from MaterialTheme.colorScheme and their TextStyle is not exposed through ChartViewDefaults - they cannot be fully themed without an upstream change.</string>
-                    <string name="charts_3_the_canvas_is_a_fixed_256dp_tall_360dp_wide_bl">3. The canvas is a fixed 256dp tall, 360dp wide block (chart view = card token, dashed-free), set through modifierChart in the view style.</string>
-                    <string name="charts_barchart">BarChart</string>
-                    <string name="charts_daily_net_cash_flow">Daily Net Cash Flow</string>
-                    <string name="charts_daily_support_tickets">Daily Support Tickets</string>
-                    <string name="charts_free_plan">Free Plan</string>
-                    <string name="charts_hdcharts_styled_with_shadcn_design_tokens_card_v">HDCharts styled with shadcn design tokens: card view, border grid, muted-foreground labels and chart-token series colors.</string>
-                    <string name="charts_heating">Heating</string>
-                    <string name="charts_histogram">Histogram</string>
-                    <string name="charts_household_energy">Household Energy</string>
-                    <string name="charts_https_charts_hdcode_dev">https://charts.hdcode.dev/</string>
-                    <string name="charts_jan">Jan</string>
-                    <string name="charts_linechart">LineChart</string>
-                    <string name="charts_mon">Mon</string>
-                    <string name="charts_monthly_active_subscribers_by_plan">Monthly Active Subscribers by Plan</string>
-                    <string name="charts_multiline">MultiLine</string>
-                    <string name="charts_north_america">North America</string>
-                    <string name="charts_notes_on_working_with_the_library_verified_again">Notes on working with the library (verified against its validation sources, version 2.4.0):</string>
-                    <string name="charts_overview">Overview</string>
-                    <string name="charts_performance">Performance</string>
-                    <string name="charts_piechart">PieChart</string>
-                    <string name="charts_platform_readiness_score">Platform Readiness Score</string>
-                    <string name="charts_q1">Q1</string>
-                    <string name="charts_quarterly_revenue_by_region">Quarterly Revenue by Region</string>
-                    <string name="charts_radar">Radar</string>
-                    <string name="charts_request_duration_distribution">Request Duration Distribution</string>
-                    <string name="charts_stackedarea">StackedArea</string>
-                    <string name="charts_stackedbar">StackedBar</string>
-                    <string name="charts_web_store">Web Store</string>
-                    <string name="charts_week_1">Week 1</string>
-                    <string name="charts_weekly_revenue_by_channel">Weekly Revenue by Channel</string>
                     <string name="checkbox_a_control_that_allows_the_user_to_toggle_between">A control that allows the user to toggle between checked and not checked.</string>
                     <string name="checkbox_accept_terms_and_conditions">Accept terms and conditions</string>
                     <string name="checkbox_checked">Checked</string>
@@ -280,7 +248,6 @@
                     <string name="components_registry_calendar">Calendar</string>
                     <string name="components_registry_card">Card</string>
                     <string name="components_registry_carousel">Carousel</string>
-                    <string name="components_registry_charts">Charts</string>
                     <string name="components_registry_checkbox">Checkbox</string>
                     <string name="components_registry_collapsible">Collapsible</string>
                     <string name="components_registry_combobox">Combobox</string>
@@ -315,7 +282,6 @@
                     <string name="components_registry_resizable">Resizable</string>
                     <string name="components_registry_select">Select</string>
                     <string name="components_registry_separator">Separator</string>
-                    <string name="components_registry_shadcn_styles_for_hdcharts">Shadcn styles for HDCharts</string>
                     <string name="components_registry_sheet">Sheet</string>
                     <string name="components_registry_sidebar">Sidebar</string>
                     <string name="components_registry_skeleton">Skeleton</string>
@@ -1161,7 +1127,6 @@
                 <string name="dashboard_method_bank_transfer">Bank Transfer</string>
             <string name="avatar_ab">AB</string>
             <string name="breadcrumb_breadcrumb">Breadcrumb</string>
-            <string name="charts_text">$</string>
             <string name="drawer_make_changes_to_your_profile_here_click_save_whe">Make changes to your profile here. Click save when you are done.</string>
             <string name="empty_notification_not_found">Notification Not Found</string>
             <string name="empty_you_do_not_have_any_notifications_actions_you_ta">You do not have any notifications. Actions you take will show up here.</string>
@@ -1217,11 +1182,6 @@
             <string name="toast_something_went_wrong_2">Something went wrong</string>
             <string name="typography_bar">bar</string>
             <string name="typography_foo">foo</string>
-        <string name="charts_1_color_list_semantics_differ_per_chart_type_for_2">1. Color list semantics differ per chart type. For Bar, Histogram, </string>
-        <string name="charts_2_the_chart_title_and_legend_are_rendered_by_the_2">2. The chart title and legend are rendered by the library from </string>
-        <string name="charts_3_the_canvas_is_a_fixed_256dp_tall_360dp_wide_bl_2">3. The canvas is a fixed 256dp tall, 360dp wide block (chart view = </string>
-        <string name="charts_hdcharts_styled_with_shadcn_design_tokens_card_v_2">HDCharts styled with shadcn design tokens: card view, border grid, </string>
-        <string name="charts_notes_on_working_with_the_library_verified_again_2">Notes on working with the library (verified against its validation </string>
         <string name="drawer_the_panel_follows_the_pointer_while_dragging_and_2">The panel follows the pointer while dragging, and dragging far enough dismisses it.</string>
     <string name="app_fonts_inter">Inter</string>
     <string name="dashboard_astro">Astro</string>

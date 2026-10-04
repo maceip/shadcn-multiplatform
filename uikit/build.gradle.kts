@@ -22,6 +22,15 @@ plugins {
 group = "com.github.jershell"
 version = libs.versions.libversion.get()
 
+// Also applies when uikit is included by a consuming composite build.
+configurations.configureEach {
+    exclude(group = "org.jetbrains.compose.material")
+    exclude(group = "org.jetbrains.compose.material3")
+    exclude(group = "androidx.compose.material")
+    exclude(group = "androidx.compose.material3")
+    exclude(group = "com.google.android.material")
+}
+
 kotlin {
     android {
         namespace = "com.github.jershell.shadcn"

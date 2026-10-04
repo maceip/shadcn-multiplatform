@@ -42,3 +42,7 @@ The user-requested extension adds the complete Prompt Kit component-family/expor
 New dependencies are pinned centrally: Material-free Markdown renderer 0.44.0, Highlights 1.1.0, FileKit 0.15.0, and JCEF 146.0.10 on desktop. Markdown and FileKit are pinned to releases compatible with Compose 1.11.1; Coil remains 3.5.0 and Compose Unstyled remains 2.9.0. Native browser engines are platform-specific; desktop consumers choose a matching bundled JCEF artifact. No remote inference service or terminal shell is started by the SDK.
 
 Source snapshots, inventories, source/theme/font licenses and rendering boundaries are retained under `imports/` and `docs/`. Runtime resources include required notices alongside the offline assets. React component files cannot be installed directly into Compose; the JSX preview is deliberately a native declarative renderer with documented supported bindings.
+
+## Material removal
+
+The demo-only HDCharts dependency and its integration are removed because the library requires Material. Both the demo and SDK exclude Material artifacts brought in by Compose Desktop. The Android demo uses a minimal platform window theme; ShadcnUI owns its rendered surfaces.
