@@ -1,5 +1,6 @@
 package com.github.jershell.shadcn.ui.screens.dashboard
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
@@ -95,8 +102,6 @@ import com.github.jershell.shadcn.theme.DimProps
 import com.github.jershell.shadcn.theme.DimTokens
 import com.github.jershell.shadcn.theme.ShadcnPreset
 import com.github.jershell.shadcn.theme.TypographyStyles
-import com.github.jershell.shadcn.ui.components.demo.shadcnLineChartStyle
-import com.github.jershell.shadcn.ui.components.demo.shadcnStackedBarChartStyle
 import com.github.jershell.shadcn.demoapp.generated.resources.Res
 import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_12_5
 import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_12_months
@@ -232,10 +237,6 @@ import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_week_4
 import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_what_is_it_about
 import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_x_selected
 import com.github.jershell.shadcn.demoapp.generated.resources.dashboard_you_made_265_sales_this_month
-import io.github.dautovicharis.charts.LineChart
-import io.github.dautovicharis.charts.StackedBarChart
-import io.github.dautovicharis.charts.model.toChartDataSet
-import io.github.dautovicharis.charts.model.toMultiChartDataSet
 import org.jetbrains.compose.resources.stringResource
 
 private enum class SaleStatus {
@@ -733,19 +734,7 @@ private fun MetricCard(
             Spacer(Modifier.height(10.dp))
             Text(headline, style = TypographyStyles.textLgMedium)
             Spacer(Modifier.height(8.dp))
-            val dataSet = remember(values) {
-                values.toChartDataSet(
-                    title = "",
-                    labels = values.indices.map { "${it + 1}" },
-                )
-            }
-            LineChart(
-                dataSet = dataSet,
-                style = shadcnLineChartStyle(
-                    chartHeight = 72.dp,
-                    yAxisLabelsVisible = false
-                )
-            )
+            DashboardSparkline(values)
         }
     }
 }
@@ -779,16 +768,7 @@ private fun ChartAreaInteractive() {
         }
         CardContent {
             val (series, categories) = visitorsDataset(range)
-            val dataSet = remember(series, categories) {
-                series.toMultiChartDataSet(
-                    title = "",
-                    categories = categories,
-                )
-            }
-            StackedBarChart(
-                dataSet = dataSet,
-                style = shadcnStackedBarChartStyle(pointCount = categories.size),
-            )
+            DashboardVisitorBars(series, categories)
             // legend like in the reference chart card
             val chart1 = Theme[ColorProps][ColorTokens.chartToken1]
             val chart2 = Theme[ColorProps][ColorTokens.chartToken2]
@@ -799,6 +779,56 @@ private fun ChartAreaInteractive() {
             ) {
                 ChartLegend(stringResource(Res.string.dashboard_desktop), chart1)
                 ChartLegend(stringResource(Res.string.dashboard_mobile), chart2)
+            }
+        }
+    }
+}
+
+// Demo-only plots use Foundation Canvas and the existing Shadcn chart tokens.
+@Composable
+private fun DashboardSparkline(values: List<Float>) {
+    val color = Theme[ColorProps][ColorTokens.chartToken1]
+    Canvas(Modifier.fillMaxWidth().height(72.dp).semantics {
+        contentDescription = values.joinToString(", ")
+    }) {
+        if (values.size < 2) return@Canvas
+        val inset = 2.dp.toPx()
+        val low = values.min()
+        val span = (values.max() - low).coerceAtLeast(1f)
+        val path = Path()
+        values.forEachIndexed { index, value ->
+            val x = inset + index * (size.width - 2 * inset) / (values.size - 1)
+            val y = size.height - inset - (value - low) / span * (size.height - 2 * inset)
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
+    }
+}
+
+@Composable
+private fun DashboardVisitorBars(series: List<Pair<String, List<Float>>>, categories: List<String>) {
+    val colors = listOf(Theme[ColorProps][ColorTokens.chartToken1], Theme[ColorProps][ColorTokens.chartToken2])
+    Column {
+        Canvas(Modifier.fillMaxWidth().height(256.dp).semantics {
+            contentDescription = categories.mapIndexed { index, label ->
+                label + ": " + series.joinToString { (name, values) -> "$name ${values.getOrElse(index) { 0f }}" }
+            }.joinToString("; ")
+        }) {
+            if (categories.isEmpty()) return@Canvas
+            val peak = categories.indices.maxOf { index -> series.sumOf { it.second.getOrElse(index) { 0f }.toDouble() } }.toFloat().coerceAtLeast(1f)
+            val columnWidth = size.width / categories.size
+            categories.indices.forEach { index ->
+                var bottom = size.height
+                series.forEachIndexed { seriesIndex, (_, values) ->
+                    val height = values.getOrElse(index) { 0f } / peak * size.height
+                    drawRect(colors[seriesIndex % colors.size], Offset((index + .2f) * columnWidth, bottom - height), Size(.6f * columnWidth, height))
+                    bottom -= height
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            categories.forEach { label ->
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { Small(label.take(3)) }
             }
         }
     }
