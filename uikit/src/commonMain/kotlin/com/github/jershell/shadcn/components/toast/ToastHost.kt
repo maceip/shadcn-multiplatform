@@ -101,6 +101,9 @@ fun ToastHost(
     modifier: Modifier = Modifier,
 ) {
     val entries = manager.entries
+    // An empty stack must not create a hover target. Otherwise entering its
+    // collapsed viewport alternates between 64 dp and zero indefinitely.
+    if (entries.isEmpty()) return
     val isTop = config.position == ToastPosition.TopStart ||
         config.position == ToastPosition.TopCenter ||
         config.position == ToastPosition.TopEnd
