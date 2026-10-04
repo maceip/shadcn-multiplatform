@@ -12,7 +12,6 @@ import com.github.jershell.shadcn.ui.components.demo.DemoButtonGroup
 import com.github.jershell.shadcn.ui.components.demo.DemoCalendar
 import com.github.jershell.shadcn.ui.components.demo.DemoCard
 import com.github.jershell.shadcn.ui.components.demo.DemoCarousel
-import com.github.jershell.shadcn.ui.components.demo.DemoCharts
 import com.github.jershell.shadcn.ui.components.demo.DemoCheckbox
 import com.github.jershell.shadcn.ui.components.demo.DemoCollapsible
 import com.github.jershell.shadcn.ui.components.demo.DemoCombobox
@@ -103,7 +102,6 @@ import com.github.jershell.shadcn.demoapp.generated.resources.components_registr
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_calendar
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_card
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_carousel
-import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_charts
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_checkbox
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_collapsible
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_combobox
@@ -138,7 +136,6 @@ import com.github.jershell.shadcn.demoapp.generated.resources.components_registr
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_resizable
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_select
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_separator
-import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_shadcn_styles_for_hdcharts
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_sheet
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_sidebar
 import com.github.jershell.shadcn.demoapp.generated.resources.components_registry_skeleton
@@ -204,13 +201,6 @@ data object ComponentsRegistry {
             description = stringResource(Res.string.components_registry_a_multi_step_questionnaire_with_choice_and_freef),
             demo = {
                 DemoQuestionnaire()
-            }
-        ),
-        ComponentId("DemoCharts") to ComponentEntry(
-            name = stringResource(Res.string.components_registry_charts),
-            description = stringResource(Res.string.components_registry_shadcn_styles_for_hdcharts),
-            demo = {
-                DemoCharts()
             }
         ),
         ComponentId("Skeleton") to ComponentEntry(

@@ -14,6 +14,18 @@ plugins {
     alias(libs.plugins.vanniktech.maven.publish).apply(false)
 }
 
+// All rendered surfaces use the approved Unstyled/Foundation kit. The Compose
+// Desktop umbrella must not reintroduce its legacy Material dependencies.
+allprojects {
+    configurations.configureEach {
+        exclude(group = "org.jetbrains.compose.material")
+        exclude(group = "org.jetbrains.compose.material3")
+        exclude(group = "androidx.compose.material")
+        exclude(group = "androidx.compose.material3")
+        exclude(group = "com.google.android.material")
+    }
+}
+
 tasks.register<ParseColorDesignTokens>("importThemeFromFigmaTokens") {
     this.group = "shadcn"
     inputFiles.from(

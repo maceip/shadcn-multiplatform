@@ -92,21 +92,6 @@ smallest overlap.
       (needs SubcomposeLayout or an explicit flag) — deferred, the difference is 4px
 - [ ] `link`: `underline-offset-4` — BasicText does not control underline offset
 
-## HDCharts — MR candidates upstream
-
-Library: io.github.dautovicharis:charts 2.4.0 (https://github.com/HDCharts/charts)
-
-- [ ] Unify the color-list semantics (lineColors/barColors/areaColors).
-      Problem: semantics are inconsistent across chart types — Bar/Histogram/
-      StackedBar/Radar/Pie expect color PER POINT/CATEGORY (list.size == points.size),
-      while Line (multi-series) and StackedArea expect color PER SERIES (list.size == items.size).
-      The user gets confusing "Colors size N does not match expected M" errors and has to
-      read the validation sources. Solution: unified "color per series" semantics
-      (+ an optional per-point override) or an explicit flag field with a documented error.
-- [ ] Move the title and legend TextStyle into ChartViewDefaults.style — currently they are
-      rendered from MaterialTheme.colorScheme inside the factory, so a chart cannot be fully
-      themed outside Material (our case: shadcn tokens).
-
 ## Compose shadows
 
 - [x] Remove `shadow-xs` from the outline Button (done)

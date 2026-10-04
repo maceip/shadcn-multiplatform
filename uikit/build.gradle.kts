@@ -22,6 +22,15 @@ plugins {
 group = "com.github.jershell"
 version = libs.versions.libversion.get()
 
+// Also applies when uikit is included by a consuming composite build.
+configurations.configureEach {
+    exclude(group = "org.jetbrains.compose.material")
+    exclude(group = "org.jetbrains.compose.material3")
+    exclude(group = "androidx.compose.material")
+    exclude(group = "androidx.compose.material3")
+    exclude(group = "com.google.android.material")
+}
+
 kotlin {
     android {
         namespace = "com.github.jershell.shadcn"
@@ -86,7 +95,6 @@ kotlin {
             api(libs.composeunstyled.modal)
             api(libs.composeunstyled.modal.bottom.sheet)
             api(libs.composeunstyled.outline)
-            api(libs.composeunstyled.platformtheme)
             api(libs.composeunstyled.portal)
             api(libs.composeunstyled.progress)
             api(libs.composeunstyled.radio.group)
@@ -101,7 +109,6 @@ kotlin {
             api(libs.composeunstyled.tooltip)
             api(libs.composeunstyled.tri.state.checkbox)
             api(libs.composeunstyled.window.container.size)
-            api(libs.composables.ripple)
             api(libs.composables.uri.painter)
             api(libs.icons.lucide.cmp)
 

@@ -2,7 +2,6 @@
 libversion = "1.0.2-dev"
 
 
-charts = "2.4.0"
 iconsTabler = "2.2.1"
 kflate = "1.0.0"
 composeUriPainter = "1.1.0"
@@ -26,7 +25,6 @@ coil = "3.5.0"
 kotlinx-datetime = "0.8.0"
 buildConfig = "5.6.5"
 iconsLucide = "2.2.1"
-ripple = "1.1.0"
 window = "1.4.0"
 semver="2.0.0"
 markdownRenderer = "0.44.0"
@@ -42,7 +40,6 @@ highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 jcef-maven = { module = "me.friwi:jcefmaven", version.ref = "jcefMaven" }
-charts = { module = "io.github.dautovicharis:charts", version.ref = "charts" }
 kflate = { module = "com.rafambn:KFlate", version.ref = "kflate" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koinCompose" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koinCompose" }
@@ -60,7 +57,6 @@ compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "
 androidx-activityCompose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 lazytable = { module = "io.github.oleksandrbalan:lazytable", version.ref = "lazytable" }
 
-composables-ripple = { module = "com.composables:ripple-indication", version.ref = "ripple" }
 composables-uri-painter = { module = "com.composables:compose-uri-painter", version.ref = "composeUriPainter" }
 icons-lucide-cmp = { module = "com.composables:icons-lucide-cmp", version.ref = "iconsLucide" }
 icons-tabler-filled-cmp = { module = "com.composables:icons-tabler-filled-cmp", version.ref = "iconsTabler" }
@@ -82,7 +78,6 @@ composeunstyled-icon = { module = "com.composables:composeunstyled-icon", versio
 composeunstyled-modal = { module = "com.composables:composeunstyled-modal", version.ref = "unstyled" }
 composeunstyled-modal-bottom-sheet = { module = "com.composables:composeunstyled-modal-bottom-sheet", version.ref = "unstyled" }
 composeunstyled-outline = { module = "com.composables:composeunstyled-outline", version.ref = "unstyled" }
-composeunstyled-platformtheme = { module = "com.composables:composeunstyled-platformtheme", version.ref = "unstyled" }
 composeunstyled-portal = { module = "com.composables:composeunstyled-portal", version.ref = "unstyled" }
 composeunstyled-progress = { module = "com.composables:composeunstyled-progress", version.ref = "unstyled" }
 composeunstyled-radio-group = { module = "com.composables:composeunstyled-radio-group", version.ref = "unstyled" }

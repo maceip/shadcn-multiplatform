@@ -61,7 +61,6 @@ kotlin {
             implementation(libs.icons.tabler.outline.cmp)
             implementation(libs.icons.tabler.filled.cmp)
 
-            implementation(libs.charts)
             implementation(libs.kflate)
         }
 
