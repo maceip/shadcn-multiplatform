@@ -45,4 +45,4 @@ Source snapshots, inventories, source/theme/font licenses and rendering boundari
 
 ## Material removal
 
-The demo-only HDCharts dependency and its integration are removed because the library requires Material. Both the demo and SDK exclude Material artifacts brought in by Compose Desktop. The Android demo uses a minimal platform window theme; ShadcnUI owns its rendered surfaces.
+The demo-only HDCharts dependency and its integration are removed because the library requires Material. The unused ripple-indication dependency is also removed because its binaries reference legacy Material ripple APIs. Both the demo and SDK exclude Material artifacts brought in by Compose Desktop. The Android demo uses a minimal platform window theme; ShadcnUI owns its rendered surfaces.

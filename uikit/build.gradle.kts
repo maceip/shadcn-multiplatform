@@ -110,7 +110,6 @@ kotlin {
             api(libs.composeunstyled.tooltip)
             api(libs.composeunstyled.tri.state.checkbox)
             api(libs.composeunstyled.window.container.size)
-            api(libs.composables.ripple)
             api(libs.composables.uri.painter)
             api(libs.icons.lucide.cmp)
 
