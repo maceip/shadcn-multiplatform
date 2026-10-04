@@ -78,7 +78,6 @@ composeunstyled-icon = { module = "com.composables:composeunstyled-icon", versio
 composeunstyled-modal = { module = "com.composables:composeunstyled-modal", version.ref = "unstyled" }
 composeunstyled-modal-bottom-sheet = { module = "com.composables:composeunstyled-modal-bottom-sheet", version.ref = "unstyled" }
 composeunstyled-outline = { module = "com.composables:composeunstyled-outline", version.ref = "unstyled" }
-composeunstyled-platformtheme = { module = "com.composables:composeunstyled-platformtheme", version.ref = "unstyled" }
 composeunstyled-portal = { module = "com.composables:composeunstyled-portal", version.ref = "unstyled" }
 composeunstyled-progress = { module = "com.composables:composeunstyled-progress", version.ref = "unstyled" }
 composeunstyled-radio-group = { module = "com.composables:composeunstyled-radio-group", version.ref = "unstyled" }

@@ -95,7 +95,6 @@ kotlin {
             api(libs.composeunstyled.modal)
             api(libs.composeunstyled.modal.bottom.sheet)
             api(libs.composeunstyled.outline)
-            api(libs.composeunstyled.platformtheme)
             api(libs.composeunstyled.portal)
             api(libs.composeunstyled.progress)
             api(libs.composeunstyled.radio.group)

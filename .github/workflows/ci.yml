@@ -78,6 +78,7 @@ jobs:
       - run: sdkmanager 'platforms;android-37.0'
       - uses: gradle/actions/setup-gradle@v4
       - run: bash ./gradlew :uikit:compileAndroidMain :demoApp:androidApp:assembleDebug --max-workers=2 --no-daemon --console=plain '-Dorg.gradle.jvmargs=-Xmx3g' '-Pkotlin.daemon.jvmargs=-Xmx2g'
+      - run: python3 scripts/check_material_apk.py demoApp/androidApp/build/outputs/apk/debug/*.apk
 
   wasm:
     name: Wasm demo executable
