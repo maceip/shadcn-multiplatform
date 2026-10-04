@@ -20,6 +20,24 @@ import com.github.jershell.shadcn.theme.*
 import kotlin.test.*
 
 class MetalButtonSurfaceTest {
+    @Test fun primarySurfaceIsPaintedOnTheFirstFrame() {
+        for (mode in listOf(Mode.Light, Mode.Dark)) {
+            var primary = Color.Unspecified
+            val scene = ImageComposeScene(200, 80, Density(1f)) {
+                ShadcnTheme(mode = mode) {
+                    primary = Theme[ColorProps][ColorTokens.primary]
+                    MetalButton("Run", {}, Modifier.size(200.dp, 80.dp), animationsEnabled = false,
+                        buttonVariant = ButtonVariant.Default)
+                }
+            }
+            try {
+                val image = scene.render(0L)
+                try { assertEquals(primary, image.toComposeImageBitmap().toPixelMap()[20, 40], "$mode: first frame must have a surface") }
+                finally { image.close() }
+            } finally { scene.close() }
+        }
+    }
+
     @Test fun primaryFillAndSlotLabelSurviveZeroEffectAndReducedMotion() {
         for (mode in listOf(Mode.Light, Mode.Dark)) {
             var primary = Color.Unspecified

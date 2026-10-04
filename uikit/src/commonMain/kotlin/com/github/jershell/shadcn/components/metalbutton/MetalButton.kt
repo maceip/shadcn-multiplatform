@@ -2,6 +2,7 @@
 package com.github.jershell.shadcn.components.metalbutton
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -118,14 +119,15 @@ fun MetalButton(
             }
         }
     }
-    Box(modifier.alpha(if (enabled) 1f else 0.5f).onGloballyPositioned {
+    // Paint the base from current layout bounds; the asynchronous effect geometry must
+    // never delay a button's surface (especially in a freshly mounted platform dialog).
+    Box(modifier.alpha(if (enabled) 1f else 0.5f).background(surface, shape).onGloballyPositioned {
         pixels = it.size
         val bounds = it.boundsInWindow()
         visible = bounds.width > 0f && bounds.height > 0f
     }, propagateMinConstraints = true) {
         Canvas(Modifier.matchParentSize()) {
             scale(density, density, Offset.Zero) {
-                drawRoundRect(surface, size = Size(width, height), cornerRadius = CornerRadius(geometry.radius))
                 frame?.takeIf { it.geometry == geometry }?.let { current ->
                     current.pixels.ring.zipWithNext { a, b ->
                         drawLine(a.color.color(strength * mode.opacity), a.point, b.point,
